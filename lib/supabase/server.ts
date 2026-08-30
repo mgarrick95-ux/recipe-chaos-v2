@@ -7,10 +7,10 @@ import { getServerEnv } from "@/lib/env/server";
 import type { Database } from "@/types/database";
 
 export async function createServerSupabaseClient() {
-  const { supabaseUrl, supabaseAnonKey } = getServerEnv();
+  const { supabaseUrl, supabasePublishableKey } = getServerEnv();
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
+  return createServerClient<Database>(supabaseUrl, supabasePublishableKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();

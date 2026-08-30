@@ -2,8 +2,7 @@ import "server-only";
 
 type ServerEnv = {
   supabaseUrl: string;
-  supabaseAnonKey: string;
-  supabaseServiceRoleKey?: string;
+  supabasePublishableKey: string;
 };
 
 function requireServerEnv(name: string): string {
@@ -19,7 +18,8 @@ function requireServerEnv(name: string): string {
 export function getServerEnv(): ServerEnv {
   return {
     supabaseUrl: requireServerEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    supabaseAnonKey: requireServerEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    supabasePublishableKey: requireServerEnv(
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    ),
   };
 }

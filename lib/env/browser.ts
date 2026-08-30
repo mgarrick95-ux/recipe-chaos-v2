@@ -2,7 +2,7 @@ import "client-only";
 
 type PublicEnv = {
   supabaseUrl: string;
-  supabaseAnonKey: string;
+  supabasePublishableKey: string;
 };
 
 function requirePublicEnv(name: string): string {
@@ -18,6 +18,8 @@ function requirePublicEnv(name: string): string {
 export function getPublicEnv(): PublicEnv {
   return {
     supabaseUrl: requirePublicEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    supabaseAnonKey: requirePublicEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    supabasePublishableKey: requirePublicEnv(
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    ),
   };
 }

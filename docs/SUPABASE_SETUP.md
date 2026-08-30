@@ -7,8 +7,7 @@ Recipe Chaos V2 must use a new Supabase project. Never point V2 at `recipe-chaos
 Copy `.env.example` to a local `.env.local` file and fill in values from the new Supabase project:
 
 - `NEXT_PUBLIC_SUPABASE_URL`: public project URL.
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: public anon key for browser and RLS-scoped server access.
-- `SUPABASE_SERVICE_ROLE_KEY`: server-only key for future trusted backend operations. Do not expose it to client code and do not use it as a fallback for anon access.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: public publishable key for browser and RLS-scoped server access.
 
 Do not commit real credentials.
 
