@@ -60,3 +60,9 @@ export function remainUnlinked(row: RecipeIngredient): RecipeIngredient {
   validateIngredient(next);
   return next;
 }
+
+export function leaveNeedsReview(row: RecipeIngredient): RecipeIngredient {
+  const next: RecipeIngredient = { ...row, verificationState: 'needs_review' };
+  validateIngredient(next);
+  return next;
+}
