@@ -96,6 +96,120 @@ export type Database = {
           },
         ];
       };
+      canonical_ingredients: {
+        Row: {
+          id: string;
+          name: string;
+          normalized_name: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          normalized_name: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          normalized_name?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ingredient_aliases: {
+        Row: {
+          id: string;
+          canonical_ingredient_id: string;
+          alias: string;
+          normalized_alias: string;
+          source: "app_seed" | "owner_approved";
+          household_id: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          canonical_ingredient_id: string;
+          alias: string;
+          normalized_alias: string;
+          source: "app_seed" | "owner_approved";
+          household_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          canonical_ingredient_id?: string;
+          alias?: string;
+          normalized_alias?: string;
+          source?: "app_seed" | "owner_approved";
+          household_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_aliases_canonical_ingredient_id_fkey";
+            columns: ["canonical_ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "canonical_ingredients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ingredient_aliases_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ingredient_separation_rules: {
+        Row: {
+          id: string;
+          household_id: string;
+          normalized_input: string;
+          blocked_canonical_ingredient_id: string;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          household_id: string;
+          normalized_input: string;
+          blocked_canonical_ingredient_id: string;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          household_id?: string;
+          normalized_input?: string;
+          blocked_canonical_ingredient_id?: string;
+          created_by?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ingredient_separation_rules_blocked_canonical_ingredient_id_fkey";
+            columns: ["blocked_canonical_ingredient_id"];
+            isOneToOne: false;
+            referencedRelation: "canonical_ingredients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ingredient_separation_rules_household_id_fkey";
+            columns: ["household_id"];
+            isOneToOne: false;
+            referencedRelation: "households";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
