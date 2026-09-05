@@ -34,7 +34,7 @@ Git checkpoint: `checkpoint/ingredient-intelligence`
 
 Objective: Support durable saved recipes using original text plus structured ingredients.
 
-Build: Recipe CRUD, ingredients, steps, tags, favorites, source URL, notes, and structured ingredient links.
+Build: Recipe CRUD, ingredients, steps, favorites, source URL, notes, and optional structured ingredient links.
 
 Do not build yet: Full Meal Brain, automated imports, Cook Mode, or shopping generation beyond simple manual hooks.
 
@@ -43,6 +43,8 @@ Acceptance criteria: A user can create, edit, favorite, delete, and view a recip
 Manual smoke tests: Add a recipe with ambiguous ingredients, edit it, reload, and confirm structured fields do not overwrite display text unexpectedly.
 
 Git checkpoint: `checkpoint/recipes`
+
+Phase 3A owner decisions: defer recipe tags and automatic parsing. An original ingredient line alone is sufficient; never require duplicate entry. Use hard deletion with ingredient/step cascades only. Revisit archival/reference behavior before Weekly Planning or history references recipes.
 
 ## Phase 4: FrostPantry And Intake
 

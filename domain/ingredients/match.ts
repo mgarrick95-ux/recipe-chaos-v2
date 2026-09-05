@@ -128,7 +128,7 @@ function matchAlias(
   };
 }
 
-function isKeptSeparate(
+export function isKeptSeparate(
   normalizedInput: string,
   canonicalIngredientId: string,
   separationRules: IngredientSeparationRule[],
