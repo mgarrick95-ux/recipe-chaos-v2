@@ -5,9 +5,7 @@ type PublicEnv = {
   supabasePublishableKey: string;
 };
 
-function requirePublicEnv(name: string): string {
-  const value = process.env[name];
-
+function requirePublicEnv(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`Missing required public environment variable: ${name}`);
   }
@@ -17,9 +15,13 @@ function requirePublicEnv(name: string): string {
 
 export function getPublicEnv(): PublicEnv {
   return {
-    supabaseUrl: requirePublicEnv("NEXT_PUBLIC_SUPABASE_URL"),
+    supabaseUrl: requirePublicEnv(
+      "NEXT_PUBLIC_SUPABASE_URL",
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+    ),
     supabasePublishableKey: requirePublicEnv(
       "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     ),
   };
 }

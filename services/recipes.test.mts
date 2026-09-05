@@ -39,12 +39,15 @@ const client = {
   },
 };
 Object.assign(globalThis, { phase3cClient: client });
+const revalidated: string[] = [];
+Object.assign(globalThis, { phase3dRevalidate: (path: string) => revalidated.push(path) });
 // Node 24 runtime supports synchronous hooks; the project's Node 20 types do not.
 type Resolution = { url: string; shortCircuit?: boolean };
 type Resolve = (specifier: string, context: object, next: (specifier: string, context: object) => Resolution) => Resolution;
 const { registerHooks } = createRequire(import.meta.url)('node:module') as { registerHooks: (hooks: { resolve: Resolve }) => void };
 registerHooks({
   resolve(specifier, context, next) {
+    if (specifier === 'next/cache') return { url: 'data:text/javascript,export const revalidatePath = globalThis.phase3dRevalidate;', shortCircuit: true };
     if (specifier === 'server-only') return { url: 'data:text/javascript,export {};', shortCircuit: true };
     if (specifier === '@/lib/supabase/server') return { url: 'data:text/javascript,export async function createServerSupabaseClient(){return globalThis.phase3cClient}', shortCircuit: true };
     if (specifier.startsWith('@/')) return next(new URL('../' + specifier.slice(2) + '.ts', import.meta.url).href, context);
@@ -53,13 +56,14 @@ registerHooks({
 });
 const recipes = await import('./recipes.ts');
 const ingredients = await import('./ingredients.ts');
+const actions = await import('../app/recipes/actions.ts');
 const row = { id, household_id: householdId, title: 'Soup', description: null, source_url: null, servings: null, yield_text: null, is_favorite: false, notes: null, created_by: id, created_at: token, updated_at: token };
 const ingredient = { id: childId, recipe_id: id, position: 0, original_text: original, ingredient_text: 'garlic', quantity: null, unit: null, descriptor: null, preparation: null, optional: false, canonical_ingredient_id: null, verification_state: 'unreviewed', created_at: token, updated_at: token };
 const step = { id: householdId, recipe_id: id, position: 0, instruction: ' Stir. ', created_at: token, updated_at: token };
 function load() { replies.push(reply(row), reply([ingredient]), reply([step])); }
 function catalogue() { replies.push(reply([{ id, name: 'garlic', normalized_name: 'garlic' }]), reply([]), reply([])); }
 function savedArgs() { return calls.find((c) => c.name === 'save_recipe')!.args[0] as { p_household_id: string; p_recipe_id?: string; p_expected_updated_at?: string; p_recipe: typeof row; p_ingredients: typeof ingredient[]; p_steps: typeof step[] }; }
-beforeEach(() => { signedIn = true; replies = []; calls = []; });
+beforeEach(() => { signedIn = true; replies = []; calls = []; revalidated.length = 0; });
 
 it('gates all public operations behind authenticated household resolution', async () => {
   signedIn = false;
@@ -228,4 +232,37 @@ it('does not report success on an empty save response or failed child read', asy
   const loaded = await recipes.getRecipe(id);
   assert.equal(loaded.ok ? 'success' : loaded.error.code, 'unexpected_error');
   assert.ok(!JSON.stringify(loaded).includes('SECRET'));
+});
+it('manual create action persists and invalidates only after success', async () => {
+  const { recipeToInput } = await import('../domain/recipes/manual-entry.ts');
+  replies.push(reply([{ recipe_id: id, updated_at: token }]));
+  const result = await actions.saveRecipeAction({ ...recipeToInput(), title: 'Soup' });
+  assert.ok(result.ok);
+  assert.deepEqual(revalidated, ['/recipes', `/recipes/${id}`]);
+});
+it('favorite action forwards the exact token through the service', async () => {
+  load(); replies.push(reply([{ recipe_id: id, updated_at: token }]));
+  assert.ok((await actions.favoriteRecipeAction(id, true, token)).ok);
+  assert.equal(savedArgs().p_expected_updated_at, token);
+  assert.equal(savedArgs().p_recipe.is_favorite, true);
+  assert.deepEqual(revalidated, ['/recipes', `/recipes/${id}`]);
+});
+it('delete action requires confirmation and never reports failure as success', async () => {
+  assert.equal((await actions.deleteRecipeAction(id, false)).ok, false);
+  assert.deepEqual(calls, []);
+  replies.push(reply(null));
+  assert.equal((await actions.deleteRecipeAction(id, true)).ok, false);
+  assert.deepEqual(revalidated, []);
+  replies.push(reply({ id }));
+  assert.ok((await actions.deleteRecipeAction(id, true)).ok);
+  assert.deepEqual(revalidated, ['/recipes']);
+});
+it('unauthorized and conflicted actions do not invalidate routes', async () => {
+  signedIn = false;
+  assert.equal((await actions.favoriteRecipeAction(id, true, token)).ok, false);
+  signedIn = true; load();
+  replies.push(reply(null, { code: 'PT412', message: 'SECRET' }));
+  const result = await actions.favoriteRecipeAction(id, true, token);
+  assert.equal(result.ok ? 'success' : result.error.code, 'conflict');
+  assert.deepEqual(revalidated, []);
 });
