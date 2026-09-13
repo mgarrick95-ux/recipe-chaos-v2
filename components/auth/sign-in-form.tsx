@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRef, useState, useSyncExternalStore, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from '@/services/auth-browser';
@@ -30,9 +31,10 @@ export function SignInForm() {
   }}>
     {/* No names: native form serialization must never include credentials. */}
     <div><label htmlFor="email" className="field-label">Email</label><input ref={emailInput} id="email" type="email" autoComplete="email" required disabled={!hydrated || pending} /></div>
-    <div><label htmlFor="password" className="field-label">Password</label><input ref={passwordInput} id="password" type="password" autoComplete="current-password" required disabled={!hydrated || pending} /></div>
+    <div><div className="mb-2 flex items-center justify-between gap-4"><label htmlFor="password" className="field-label mb-0">Password</label><Link className="text-link text-xs" href="/forgot-password">Forgot password?</Link></div><input ref={passwordInput} id="password" type="password" autoComplete="current-password" required disabled={!hydrated || pending} /></div>
     {message && <p className="error-message" role="alert">{message}</p>}
     <button type="submit" className="btn btn-primary w-full" disabled={!hydrated || pending}>{pending ? 'Signing in…' : 'Sign in'}</button>
+    <p className="muted text-center text-sm">New to Recipe Chaos? <Link className="text-link" href="/sign-up">Create an account</Link></p>
     {!hydrated && <p className="muted text-sm" role="status">Waiting for sign-in to load. If this stays here, reload the page.</p>}
     <noscript><p className="muted text-sm">JavaScript is required to sign in. Enable it and reload this page.</p></noscript>
   </form>;
