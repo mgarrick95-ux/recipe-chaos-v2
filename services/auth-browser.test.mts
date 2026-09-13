@@ -16,11 +16,33 @@ type AuthMocks = {
   updateUser?: (input: unknown) => Promise<unknown>;
 };
 
-function load(mocks: AuthMocks) {
-  const module = { exports: {} as Record<string, (...args: any[]) => Promise<any>> };
+type AuthResult = {
+  ok: boolean;
+  data?: null | { needsEmailConfirmation?: boolean };
+  error?: { code: string; message: string };
+};
+
+type AuthApi = {
+  signUp(email: string, password: string): Promise<AuthResult>;
+  requestPasswordReset(email: string): Promise<AuthResult>;
+  updatePassword(password: string): Promise<AuthResult>;
+};
+
+type SignUpPayload = {
+  email: string;
+  password: string;
+  options: { emailRedirectTo: string };
+};
+
+type ResetOptions = { redirectTo: string };
+type PasswordPayload = { password: string };
+
+function load(mocks: AuthMocks): AuthApi {
+  const exported = {} as AuthApi;
+  const sandboxModule = { exports: exported };
   runInNewContext(outputText, {
-    module,
-    exports: module.exports,
+    module: sandboxModule,
+    exports: exported,
     window: { location: { origin: 'https://recipe-chaos.example' } },
     require(name: string) {
       if (name === '@/lib/supabase/browser') {
@@ -35,24 +57,24 @@ function load(mocks: AuthMocks) {
       throw new Error(`Unexpected dependency: ${name}`);
     },
   });
-  return module.exports;
+  return sandboxModule.exports;
 }
 
 it('signup uses the safe auth callback and reports when email confirmation is required', async () => {
-  let payload: any;
+  let payload: SignUpPayload | undefined;
   const api = load({
     async signUp(input) {
-      payload = input;
+      payload = input as SignUpPayload;
       return { data: { session: null }, error: null };
     },
   });
 
   const result = await api.signUp('megan@example.com', 'long-enough-password');
-  assert.equal(payload.email, 'megan@example.com');
-  assert.equal(payload.password, 'long-enough-password');
-  assert.equal(payload.options.emailRedirectTo, 'https://recipe-chaos.example/auth/callback?next=/recipes');
+  assert.equal(payload?.email, 'megan@example.com');
+  assert.equal(payload?.password, 'long-enough-password');
+  assert.equal(payload?.options.emailRedirectTo, 'https://recipe-chaos.example/auth/callback?next=/recipes');
   assert.equal(result.ok, true);
-  assert.equal(result.data.needsEmailConfirmation, true);
+  assert.equal(result.data?.needsEmailConfirmation, true);
 });
 
 it('signup reports an immediately usable session without requiring email confirmation', async () => {
@@ -64,39 +86,39 @@ it('signup reports an immediately usable session without requiring email confirm
 
   const result = await api.signUp('megan@example.com', 'long-enough-password');
   assert.equal(result.ok, true);
-  assert.equal(result.data.needsEmailConfirmation, false);
+  assert.equal(result.data?.needsEmailConfirmation, false);
 });
 
 it('password reset returns through the auth callback to the reset page', async () => {
   let email: string | undefined;
-  let options: any;
+  let options: ResetOptions | undefined;
   const api = load({
     async resetPasswordForEmail(nextEmail, nextOptions) {
       email = nextEmail;
-      options = nextOptions;
+      options = nextOptions as ResetOptions;
       return { error: null };
     },
   });
 
   const result = await api.requestPasswordReset('megan@example.com');
   assert.equal(email, 'megan@example.com');
-  assert.equal(options.redirectTo, 'https://recipe-chaos.example/auth/callback?next=/reset-password');
+  assert.equal(options?.redirectTo, 'https://recipe-chaos.example/auth/callback?next=/reset-password');
   assert.equal(result.ok, true);
   assert.equal(result.data, null);
 });
 
 it('password update sends only the requested new password to Supabase', async () => {
-  let payload: any;
+  let payload: PasswordPayload | undefined;
   const api = load({
     async updateUser(input) {
-      payload = input;
+      payload = input as PasswordPayload;
       return { error: null };
     },
   });
 
   const result = await api.updatePassword('another-long-password');
-  assert.equal(payload.password, 'another-long-password');
-  assert.equal(Object.keys(payload).length, 1);
+  assert.equal(payload?.password, 'another-long-password');
+  assert.equal(payload ? Object.keys(payload).length : 0, 1);
   assert.equal(result.ok, true);
   assert.equal(result.data, null);
 });
@@ -110,7 +132,7 @@ it('auth service maps provider failures to safe user-facing errors', async () =>
 
   const result = await api.signUp('megan@example.com', 'long-enough-password');
   assert.equal(result.ok, false);
-  assert.equal(result.error.code, 'validation_error');
-  assert.equal(result.error.message, 'We could not create that account. Check the details and try again.');
-  assert.doesNotMatch(result.error.message, /provider detail/);
+  assert.equal(result.error?.code, 'validation_error');
+  assert.equal(result.error?.message, 'We could not create that account. Check the details and try again.');
+  assert.doesNotMatch(result.error?.message ?? '', /provider detail/);
 });
