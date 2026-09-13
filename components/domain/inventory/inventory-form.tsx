@@ -3,36 +3,73 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { deleteInventoryAction, saveInventoryAction } from "@/app/pantry/actions";
+import {
+  checkInventoryDuplicateAction,
+  deleteInventoryAction,
+  saveInventoryAction,
+} from "@/app/pantry/actions";
 import { inventoryToInput } from "@/domain/inventory/manual-entry";
 import type { InventoryItem, ManualInventoryInput } from "@/domain/inventory/types";
 import type { ServiceError } from "@/services/result";
 import { inventoryErrorMessage } from "./messages";
 
+const locationLabels = {
+  pantry: "Pantry",
+  fridge: "Fridge",
+  freezer: "Freezer",
+  leftovers: "Leftovers",
+} as const;
+
 export function InventoryForm({ item }: { item?: InventoryItem }) {
   const router = useRouter();
   const [fields, setFields] = useState<ManualInventoryInput>(() => inventoryToInput(item));
   const [error, setError] = useState<ServiceError | null>(null);
+  const [duplicate, setDuplicate] = useState<InventoryItem | null>(null);
   const [pending, startTransition] = useTransition();
 
   function set<K extends keyof ManualInventoryInput>(key: K, value: ManualInventoryInput[K]) {
     setFields((current) => ({ ...current, [key]: value }));
+    if (key === "displayName" || key === "location") setDuplicate(null);
   }
 
   function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
     startTransition(async () => {
-      const result = await saveInventoryAction(
-        fields,
-        item ? { itemId: item.id, expectedUpdatedAt: item.updatedAt } : undefined,
-      );
-      if (!result.ok) {
-        setError(result.error);
-        return;
+      if (!item) {
+        const duplicateResult = await checkInventoryDuplicateAction(fields);
+        if (!duplicateResult.ok) {
+          setError(duplicateResult.error);
+          return;
+        }
+        if (duplicateResult.data) {
+          setDuplicate(duplicateResult.data);
+          return;
+        }
       }
-      router.push("/pantry");
-      router.refresh();
+
+      await persist();
+    });
+  }
+
+  async function persist() {
+    const result = await saveInventoryAction(
+      fields,
+      item ? { itemId: item.id, expectedUpdatedAt: item.updatedAt } : undefined,
+    );
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    router.push("/pantry");
+    router.refresh();
+  }
+
+  function addAnyway() {
+    setError(null);
+    startTransition(async () => {
+      await persist();
     });
   }
 
@@ -92,6 +129,19 @@ export function InventoryForm({ item }: { item?: InventoryItem }) {
         <div><label htmlFor="notes" className="field-label">Notes</label><textarea id="notes" rows={3} value={fields.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Anything worth remembering." /></div>
       </section>
     </fieldset>
+
+    {duplicate && !item && <section className="rounded-[1rem] border border-purple-300/30 bg-purple-300/[.07] p-5" role="status">
+      <p className="font-medium text-purple-100">Looks like this may already be in FrostPantry.</p>
+      <p className="muted mt-2 text-sm">
+        {duplicate.displayName} is already in {locationLabels[duplicate.location]}
+        {duplicate.quantity !== null ? ` (${duplicate.quantity}${duplicate.unit ? ` ${duplicate.unit}` : ""})` : ""}.
+        Nothing will be merged unless you choose to change it.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Link href={`/pantry/${duplicate.id}/edit`} className="btn btn-primary">Edit existing</Link>
+        <button type="button" className="btn" disabled={pending} onClick={addAnyway}>{pending ? "Adding…" : "Add anyway"}</button>
+      </div>
+    </section>}
 
     {error && <div role="alert" className="error-message">{inventoryErrorMessage(error)}</div>}
 
