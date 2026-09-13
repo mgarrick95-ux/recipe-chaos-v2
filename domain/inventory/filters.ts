@@ -1,4 +1,4 @@
-import type { InventoryItem, InventoryLocation } from "./types";
+import type { InventoryItem, InventoryLocation } from "./types.ts";
 
 export type InventoryFilter = "all" | InventoryLocation | "soon" | "expired";
 
