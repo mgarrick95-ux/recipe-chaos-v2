@@ -1,7 +1,9 @@
 'use client';
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
+import { setInventoryStockAction } from "@/app/pantry/actions";
 import {
   filterInventory,
   isExpired,
@@ -117,22 +119,59 @@ function SectionHeading({ label, count }: { label: string; count: number }) {
 
 function InventoryGrid({ items, todayIso }: { items: InventoryItem[]; todayIso: string }) {
   return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    {items.map((item) => <Link
+    {items.map((item) => <article
       key={item.id}
-      href={`/pantry/${item.id}/edit`}
       className="panel group flex min-h-44 flex-col gap-3 transition-colors hover:border-teal-400/60"
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="section-title group-hover:text-teal-200">{item.displayName}</h3>
+        <Link href={`/pantry/${item.id}/edit`} className="min-w-0 flex-1">
+          <h3 className="section-title group-hover:text-teal-200">{item.displayName}</h3>
+        </Link>
         {item.useSoonStatus === "use_soon" && <span className="rounded-full bg-purple-300/10 px-2 py-1 text-xs text-purple-200">Use soon</span>}
       </div>
       <p className="muted text-sm">{item.quantity !== null ? `${item.quantity}${item.unit ? ` ${item.unit}` : ""}` : "Quantity not tracked"}</p>
-      <div className="mt-auto flex flex-wrap items-center gap-2 text-xs">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
         {item.isStaple && <span className="rounded-full bg-teal-300/10 px-2 py-1 text-teal-200">Staple</span>}
         {item.isOutOfStock && <span className="rounded-full bg-rose-300/10 px-2 py-1 text-rose-200">Out of stock</span>}
         <ExpiryLabel item={item} todayIso={todayIso} />
       </div>
-    </Link>)}
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-white/10 pt-3">
+        <Link href={`/pantry/${item.id}/edit`} className="text-link text-xs">Edit</Link>
+        <StockStateButton item={item} />
+      </div>
+    </article>)}
+  </div>;
+}
+
+function StockStateButton({ item }: { item: InventoryItem }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function toggleStock() {
+    setError(null);
+    startTransition(async () => {
+      const result = await setInventoryStockAction(item.id, item.updatedAt, !item.isOutOfStock);
+      if (!result.ok) {
+        setError("Couldn’t update stock. Refresh and try again.");
+        return;
+      }
+      router.refresh();
+    });
+  }
+
+  return <div className="flex flex-col items-end gap-1">
+    <button
+      type="button"
+      disabled={pending}
+      className={item.isOutOfStock
+        ? "rounded-full border border-teal-300/40 bg-teal-300/10 px-3 py-1.5 text-xs font-medium text-teal-100 disabled:opacity-60"
+        : "rounded-full border border-white/10 bg-white/[.03] px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:border-white/20 hover:text-white disabled:opacity-60"}
+      onClick={toggleStock}
+    >
+      {pending ? "Updating…" : item.isOutOfStock ? "Mark restocked" : "Mark out"}
+    </button>
+    {error && <span role="alert" className="text-[11px] text-rose-200">{error}</span>}
   </div>;
 }
 
