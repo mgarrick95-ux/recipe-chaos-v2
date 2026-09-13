@@ -1,6 +1,7 @@
 import type { InventoryItem, InventoryLocation } from "./types.ts";
 
 export type InventoryFilter = "all" | InventoryLocation | "soon" | "expired";
+export type InventorySort = "default" | "name" | "expiry";
 
 const soonishDaysByLocation: Record<InventoryLocation, number> = {
   pantry: 0,
@@ -18,6 +19,23 @@ export function filterInventory(
   if (filter === "soon") return items.filter((item) => isSoonish(item, todayIso));
   if (filter === "expired") return items.filter((item) => isExpired(item, todayIso));
   return items.filter((item) => item.location === filter);
+}
+
+export function sortInventory(items: InventoryItem[], sort: InventorySort): InventoryItem[] {
+  if (sort === "default") return items;
+
+  return [...items].sort((left, right) => {
+    if (sort === "name") {
+      return left.displayName.localeCompare(right.displayName, undefined, { sensitivity: "base" });
+    }
+
+    if (left.expiryDate === right.expiryDate) {
+      return left.displayName.localeCompare(right.displayName, undefined, { sensitivity: "base" });
+    }
+    if (left.expiryDate === null) return 1;
+    if (right.expiryDate === null) return -1;
+    return left.expiryDate.localeCompare(right.expiryDate);
+  });
 }
 
 export function isExpired(item: InventoryItem, todayIso: string): boolean {
