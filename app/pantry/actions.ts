@@ -6,10 +6,22 @@ import type { ManualInventoryDraft, ManualInventoryInput } from "@/domain/invent
 import {
   createInventoryItem,
   deleteInventoryItem,
+  findInventoryDuplicate,
   getInventoryItem,
   updateInventoryItem,
 } from "@/services/inventory";
 import { err } from "@/services/result";
+
+export async function checkInventoryDuplicateAction(input: ManualInventoryInput) {
+  let draft;
+  try {
+    draft = buildManualInventory(input);
+  } catch {
+    return err("validation_error", "Check the item name, quantity, dates, and storage location before saving.");
+  }
+
+  return findInventoryDuplicate(draft.displayName, draft.location);
+}
 
 export async function saveInventoryAction(
   input: ManualInventoryInput,
