@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { it } from "node:test";
-import { filterInventory, isExpired, isSoonish } from "./filters.ts";
+import { filterInventory, isExpired, isSoonish, sortInventory } from "./filters.ts";
 import type { InventoryItem, InventoryLocation } from "./types.ts";
 
 const today = "2026-09-13";
@@ -72,4 +72,30 @@ it("filters by location, Soon-ish, and expired state", () => {
   assert.deepEqual(filterInventory(items, "fridge", today).map((entry) => entry.displayName), ["Milk"]);
   assert.deepEqual(filterInventory(items, "soon", today).map((entry) => entry.displayName), ["Milk"]);
   assert.deepEqual(filterInventory(items, "expired", today).map((entry) => entry.displayName), ["Old leftovers"]);
+});
+
+it("sorts alphabetically without mutating the source list", () => {
+  const items = [
+    item({ displayName: "zucchini" }),
+    item({ displayName: "Apples" }),
+    item({ displayName: "Milk" }),
+  ];
+
+  const sorted = sortInventory(items, "name");
+  assert.deepEqual(sorted.map((entry) => entry.displayName), ["Apples", "Milk", "zucchini"]);
+  assert.deepEqual(items.map((entry) => entry.displayName), ["zucchini", "Apples", "Milk"]);
+});
+
+it("sorts dated items by earliest expiry and leaves undated items last", () => {
+  const items = [
+    item({ displayName: "Rice", expiryDate: null }),
+    item({ displayName: "Milk", expiryDate: "2026-09-15" }),
+    item({ displayName: "Leftovers", expiryDate: "2026-09-13" }),
+    item({ displayName: "Apples", expiryDate: "2026-09-15" }),
+  ];
+
+  assert.deepEqual(
+    sortInventory(items, "expiry").map((entry) => entry.displayName),
+    ["Leftovers", "Apples", "Milk", "Rice"],
+  );
 });
