@@ -73,6 +73,10 @@ export function InventoryForm({ item }: { item?: InventoryItem }) {
     });
   }
 
+  function cancelDuplicate() {
+    setDuplicate(null);
+  }
+
   function remove() {
     if (!item || !window.confirm(`Remove ${item.displayName} from FrostPantry?`)) return;
     setError(null);
@@ -140,6 +144,7 @@ export function InventoryForm({ item }: { item?: InventoryItem }) {
       <div className="mt-4 flex flex-wrap gap-3">
         <Link href={`/pantry/${duplicate.id}/edit`} className="btn btn-primary">Edit existing</Link>
         <button type="button" className="btn" disabled={pending} onClick={addAnyway}>{pending ? "Adding…" : "Add anyway"}</button>
+        <button type="button" className="btn" disabled={pending} onClick={cancelDuplicate}>Cancel</button>
       </div>
     </section>}
 
