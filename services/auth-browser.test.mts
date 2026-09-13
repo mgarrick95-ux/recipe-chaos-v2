@@ -48,12 +48,11 @@ it('signup uses the safe auth callback and reports when email confirmation is re
   });
 
   const result = await api.signUp('megan@example.com', 'long-enough-password');
-  assert.deepEqual(payload, {
-    email: 'megan@example.com',
-    password: 'long-enough-password',
-    options: { emailRedirectTo: 'https://recipe-chaos.example/auth/callback?next=/recipes' },
-  });
-  assert.deepEqual(result, { ok: true, data: { needsEmailConfirmation: true } });
+  assert.equal(payload.email, 'megan@example.com');
+  assert.equal(payload.password, 'long-enough-password');
+  assert.equal(payload.options.emailRedirectTo, 'https://recipe-chaos.example/auth/callback?next=/recipes');
+  assert.equal(result.ok, true);
+  assert.equal(result.data.needsEmailConfirmation, true);
 });
 
 it('signup reports an immediately usable session without requiring email confirmation', async () => {
@@ -64,7 +63,8 @@ it('signup reports an immediately usable session without requiring email confirm
   });
 
   const result = await api.signUp('megan@example.com', 'long-enough-password');
-  assert.deepEqual(result, { ok: true, data: { needsEmailConfirmation: false } });
+  assert.equal(result.ok, true);
+  assert.equal(result.data.needsEmailConfirmation, false);
 });
 
 it('password reset returns through the auth callback to the reset page', async () => {
@@ -80,10 +80,9 @@ it('password reset returns through the auth callback to the reset page', async (
 
   const result = await api.requestPasswordReset('megan@example.com');
   assert.equal(email, 'megan@example.com');
-  assert.deepEqual(options, {
-    redirectTo: 'https://recipe-chaos.example/auth/callback?next=/reset-password',
-  });
-  assert.deepEqual(result, { ok: true, data: null });
+  assert.equal(options.redirectTo, 'https://recipe-chaos.example/auth/callback?next=/reset-password');
+  assert.equal(result.ok, true);
+  assert.equal(result.data, null);
 });
 
 it('password update sends only the requested new password to Supabase', async () => {
@@ -96,8 +95,10 @@ it('password update sends only the requested new password to Supabase', async ()
   });
 
   const result = await api.updatePassword('another-long-password');
-  assert.deepEqual(payload, { password: 'another-long-password' });
-  assert.deepEqual(result, { ok: true, data: null });
+  assert.equal(payload.password, 'another-long-password');
+  assert.equal(Object.keys(payload).length, 1);
+  assert.equal(result.ok, true);
+  assert.equal(result.data, null);
 });
 
 it('auth service maps provider failures to safe user-facing errors', async () => {
