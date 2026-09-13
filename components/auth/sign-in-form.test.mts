@@ -28,6 +28,7 @@ function mount(result: ServiceResult<null>, hydrated = true) {
         useState: () => ['', (message: string) => messages.push(message)],
         useTransition: () => [false, (action: () => Promise<void>) => { transition = action(); }],
       };
+      if (name === 'next/link') return { default: 'a' };
       if (name === 'next/navigation') return { useRouter: () => ({
         replace(path: string) { assert.equal(path, '/recipes'); events.push('redirect'); },
         refresh() { events.push('refresh'); },
