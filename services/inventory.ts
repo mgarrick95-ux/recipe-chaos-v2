@@ -1,6 +1,7 @@
 import "server-only";
 
-import type { InventoryItem, ManualInventoryDraft } from "@/domain/inventory/types";
+import { isSameInventoryIdentity } from "@/domain/inventory/duplicates";
+import type { InventoryItem, InventoryLocation, ManualInventoryDraft } from "@/domain/inventory/types";
 import { isUuid } from "@/domain/recipes/validation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCurrentHousehold } from "@/services/households";
@@ -48,6 +49,33 @@ export async function listInventory(): Promise<ServiceResult<InventoryItem[]>> {
     return err("unexpected_error", "FrostPantry could not be loaded.");
   }
   return ok((data as InventoryRow[]).map(mapInventoryItem));
+}
+
+export async function findInventoryDuplicate(
+  displayName: string,
+  location: InventoryLocation,
+): Promise<ServiceResult<InventoryItem | null>> {
+  const household = await getCurrentHousehold();
+  if (!household.ok) return household;
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("inventory_items")
+    .select("*")
+    .eq("household_id", household.data.householdId)
+    .eq("location", location)
+    .is("deleted_at", null)
+    .order("display_name", { ascending: true });
+
+  if (error) {
+    reportInventoryError("find duplicate", error);
+    return err("unexpected_error", "FrostPantry could not check for an existing item.");
+  }
+
+  const duplicate = (data as InventoryRow[])
+    .map(mapInventoryItem)
+    .find((item) => isSameInventoryIdentity(item, displayName, location)) ?? null;
+
+  return ok(duplicate);
 }
 
 export async function getInventoryItem(itemId: string): Promise<ServiceResult<InventoryItem>> {
