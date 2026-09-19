@@ -11,6 +11,7 @@ export function AppHeader() {
         <Link href="/recipes" className="nav-link">Recipes</Link>
         <Link href="/pantry" className="nav-link">FrostPantry</Link>
         <Link href="/shopping" className="nav-link">Shopping</Link>
+        <Link href="/plan" className="nav-link">Weekly Plan</Link>
       </nav>
     </div>
   </header>;
