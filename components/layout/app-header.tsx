@@ -7,7 +7,12 @@ export function AppHeader() {
         <span aria-hidden="true" className="brand-mark">↝</span>
         <span>Recipe <span className="text-teal-300">Chaos</span><span className="text-purple-300">.</span></span>
       </Link>
-      <nav aria-label="Main"><Link href="/recipes" className="nav-link">Recipes</Link></nav>
+      <nav aria-label="Main" className="flex flex-wrap items-center justify-end gap-2">
+        <Link href="/recipes" className="nav-link">Recipes</Link>
+        <Link href="/pantry" className="nav-link">FrostPantry</Link>
+        <Link href="/shopping" className="nav-link">Shopping</Link>
+        <Link href="/plan" className="nav-link">Weekly Plan</Link>
+      </nav>
     </div>
   </header>;
 }

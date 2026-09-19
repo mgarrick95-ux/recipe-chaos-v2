@@ -37,6 +37,7 @@
   .nav-link { color: #8de7cf; font-size: .9rem; padding: .6rem .9rem; border-radius: .65rem; background: #20362e; }
   .brand-mark { display: grid; place-items: center; width: 2.3rem; height: 2.3rem; border: 1px solid #5ca892; border-radius: .7rem; color: #85e4ca; font-size: 1.8rem; transform: rotate(-6deg); }
   .error-message { border: 1px solid #855c54; background: #332421; color: #ffd0c4; padding: 1rem; border-radius: .7rem; }
+  .success-message { border: 1px solid #477466; background: #18332b; color: #b7f3df; padding: 1rem; border-radius: .7rem; }
   .authored { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; }
   .skip-link { position: fixed; top: .5rem; left: 1rem; z-index: 50; padding: .75rem; background: #65dfc3; color: #082c25; transform: translateY(-200%); }
   .skip-link:focus { transform: translateY(0); }
