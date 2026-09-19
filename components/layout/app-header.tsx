@@ -10,6 +10,7 @@ export function AppHeader() {
       <nav aria-label="Main" className="flex flex-wrap items-center justify-end gap-2">
         <Link href="/recipes" className="nav-link">Recipes</Link>
         <Link href="/pantry" className="nav-link">FrostPantry</Link>
+        <Link href="/shopping" className="nav-link">Shopping</Link>
       </nav>
     </div>
   </header>;
