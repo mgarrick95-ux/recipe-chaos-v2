@@ -16,6 +16,8 @@ type ShoppingRow = {
   intention: ShoppingItem['intention'];
   source_type: ShoppingItem['sourceType'];
   source_id: string | null;
+  source_slot_id: string | null;
+  source_recipe_ingredient_id: string | null;
   is_checked: boolean;
   created_at: string;
   updated_at: string;
@@ -31,6 +33,8 @@ function mapShoppingItem(row: ShoppingRow): ShoppingItem {
     intention: row.intention,
     sourceType: row.source_type,
     sourceId: row.source_id,
+    sourceSlotId: row.source_slot_id,
+    sourceRecipeIngredientId: row.source_recipe_ingredient_id,
     isChecked: row.is_checked,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

@@ -11,6 +11,8 @@ type ShoppingTable = {
     intention: 'general' | 'this_week' | 'staple';
     source_type: 'manual' | 'plan';
     source_id: string | null;
+    source_slot_id: string | null;
+    source_recipe_ingredient_id: string | null;
     is_checked: boolean;
     created_by: string;
     created_at: string;
@@ -27,6 +29,8 @@ type ShoppingTable = {
     intention?: 'general' | 'this_week' | 'staple';
     source_type?: 'manual' | 'plan';
     source_id?: string | null;
+    source_slot_id?: string | null;
+    source_recipe_ingredient_id?: string | null;
     is_checked?: boolean;
     created_by: string;
     created_at?: string;

@@ -9,6 +9,8 @@ export type ShoppingItem = {
   intention: ShoppingIntention;
   sourceType: 'manual' | 'plan';
   sourceId: string | null;
+  sourceSlotId: string | null;
+  sourceRecipeIngredientId: string | null;
   isChecked: boolean;
   createdAt: string;
   updatedAt: string;

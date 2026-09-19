@@ -37,6 +37,10 @@ export type Database = Omit<ShoppingDatabase, 'public'> & {
     Functions: ShoppingDatabase['public']['Functions'] & {
       save_manual_plan: { Args: { p_household_id: string; p_start: string; p_count: number }; Returns: string };
       set_manual_plan_recipe: { Args: { p_slot_id: string; p_recipe_id: string | null }; Returns: undefined };
+      add_plan_shopping_items: {
+        Args: { p_plan_id: string; p_origins: import('./database').Json };
+        Returns: { slot_id: string; recipe_ingredient_id: string; outcome: string; shopping_item_id: string | null }[];
+      };
     };
   };
 };

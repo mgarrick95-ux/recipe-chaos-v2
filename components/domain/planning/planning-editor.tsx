@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { lockMealAction, saveContextAction, savePlanAction, selectMealAction } from '@/app/plan/actions';
 import type { PlanContextInput, PlanningView } from '@/services/planning';
+import { PlanShoppingReview } from './plan-shopping-review';
 
 export function PlanningEditor({ view }: { view: PlanningView }) {
   const router = useRouter();
@@ -67,6 +68,7 @@ export function PlanningEditor({ view }: { view: PlanningView }) {
           {slot.locked && <p className="muted text-sm">Unlock this meal to swap or remove its recipe.</p>}
         </article>)}</div>
       </section>
+      {plan.slots.some((slot) => slot.recipeId) && <PlanShoppingReview planId={plan.id} />}
       <section className="panel space-y-4" aria-labelledby="planning-context">
         <div><h2 id="planning-context" className="section-title">What does this week feel like?</h2>
           <p className="muted mt-1 text-sm">Optional notes for planning. You can change these anytime.</p></div>
