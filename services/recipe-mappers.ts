@@ -4,11 +4,25 @@ import type { RecipeAggregate, RecipeDraft, RecipeIngredient, RecipeStep } from 
 export type RecipeRow = { id: string; household_id: string; title: string; description: string | null; source_url: string | null; servings: number | null; yield_text: string | null; is_favorite: boolean; notes: string | null; created_by: string; created_at: string; updated_at: string };
 export type RecipeIngredientRow = { id: string; recipe_id: string; position: number; original_text: string; ingredient_text: string; quantity: string | null; unit: string | null; descriptor: string | null; preparation: string | null; optional: boolean; canonical_ingredient_id: string | null; verification_state: "unreviewed" | "verified" | "needs_review"; created_at: string; updated_at: string };
 export type RecipeStepRow = { id: string; recipe_id: string; position: number; instruction: string; created_at: string; updated_at: string };
-export type RecipeSummary = Pick<RecipeAggregate, "id" | "title" | "description" | "isFavorite" | "servings" | "yieldText" | "updatedAt">;
+export type RecipeListRow = RecipeRow & {
+  recipe_ingredients?: { original_text: string }[];
+  recipe_steps?: { instruction: string }[];
+};
+export type RecipeSummary = Pick<RecipeAggregate, "id" | "title" | "description" | "isFavorite" | "servings" | "yieldText" | "updatedAt"> & {
+  searchText?: string; // Read-only index text; never replaces authored fields.
+};
 export type SaveRecipeRpcArgs = { p_household_id: string; p_recipe: Json; p_ingredients: Json; p_steps: Json; p_recipe_id?: string; p_expected_updated_at?: string };
 
-export function mapRecipeSummary(row: RecipeRow): RecipeSummary {
-  return { id: row.id, title: row.title, description: row.description, isFavorite: row.is_favorite, servings: row.servings, yieldText: row.yield_text, updatedAt: row.updated_at };
+export function mapRecipeSummary(row: RecipeListRow): RecipeSummary {
+  return {
+    id: row.id, title: row.title, description: row.description,
+    isFavorite: row.is_favorite, servings: row.servings,
+    yieldText: row.yield_text, updatedAt: row.updated_at,
+    searchText: [
+      ...(row.recipe_ingredients ?? []).map(item => item.original_text),
+      ...(row.recipe_steps ?? []).map(item => item.instruction),
+    ].join(' '),
+  };
 }
 
 export function mapRecipeAggregate(row: RecipeRow, ingredientRows: RecipeIngredientRow[], stepRows: RecipeStepRow[]): RecipeAggregate {

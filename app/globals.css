@@ -604,3 +604,48 @@
   .enchanted-filter { padding: .52rem .75rem; }
 }
 @media (prefers-reduced-motion: reduce) { .enchanted-filter { transition: none; } }
+
+
+/* Recipe library discovery, styled to match Grimm's Enchanted Kitchen. */
+.recipe-filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.65rem;
+  padding: clamp(.95rem, 2.1vw, 1.35rem);
+  border: 1px solid rgba(128, 91, 58, .38);
+  border-radius: .55rem 1rem .4rem .85rem;
+  background: rgba(255, 248, 229, .58);
+}
+.recipe-filter-field { min-width: 0; }
+.recipe-filter-label {
+  display: block; margin-bottom: .5rem;
+  color: #49382c; font-size: .9rem; font-weight: 700;
+}
+.recipe-filter-hint { margin-top: .4rem; color: #665b4e; font-size: .78rem; }
+.recipe-world .recipe-search-input,
+.recipe-world .recipe-sort-select {
+  display: block; width: 100%; min-height: 2.85rem;
+  border: 1px solid #977c5c; border-radius: .5rem .25rem .55rem .35rem;
+  background: #fff9ec; color: #2c2822; padding: .65rem .85rem;
+  font: inherit;
+}
+.recipe-world .recipe-search-input::placeholder { color: #766d60; }
+.recipe-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; }
+.recipe-world .recipe-keeper-filter[aria-pressed="true"] {
+  border-color: #214e43; background: #214e43; color: #fff5df;
+}
+.recipe-world .recipe-keeper-filter[aria-pressed="true"]:hover:not(:disabled) { background: #306557; }
+.recipe-no-matches {
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  border: 1px dashed #957650;
+  border-radius: .65rem .3rem .8rem .4rem;
+  background: rgba(255, 248, 227, .62);
+}
+@media (min-width: 740px) {
+  .recipe-filters { grid-template-columns: minmax(0, 1.5fr) minmax(11rem, 1fr); }
+  .recipe-filter-actions { grid-column: 1 / -1; }
+}
+@media (max-width: 420px) {
+  .recipe-filter-actions .btn { flex: 1 1 auto; }
+}

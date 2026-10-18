@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { listRecipes } from '@/services/recipes';
-import { RecipeCard } from '@/components/domain/recipes/recipe-card';
+import { RecipeLibrary } from '@/components/domain/recipes/recipe-library';
 import { LoadError } from '@/components/domain/recipes/load-error';
 import { LilGrimm } from '@/components/brand/lil-grimm';
 
@@ -18,7 +18,7 @@ export default async function RecipesPage() {
         {hasRecipes && <LilGrimm scene="library" />}
       </div>
     </header>
-    {hasRecipes ? <section className="recipe-collection" aria-label="Recipe collection"><div className="recipe-collection-heading"><div><p className="eyebrow">The collection</p><h2 className="section-title">From your kitchen</h2></div><p className="recipe-count">{result.data.length} {result.data.length === 1 ? "recipe" : "recipes"} tucked away</p></div><div className={result.data.length === 1 ? "recipe-grid recipe-grid-single" : "recipe-grid"}>{result.data.map((recipe) => <RecipeCard key={recipe.id} recipe={recipe} />)}</div></section> :
+    {hasRecipes ? <RecipeLibrary recipes={result.data} /> :
       <section className="recipe-empty min-h-60 p-7 sm:min-h-64 sm:p-10">
         <div className="relative z-10 flex flex-col items-start gap-4"><h2 className="section-title">The shelf is suspiciously tidy.</h2><p className="muted max-w-sm leading-7">No recipes yet. Add the first one before dinner gets ideas.</p><Link href="/recipes/new" className="btn btn-primary maker-btn mt-1">Add your first recipe</Link></div>
         <LilGrimm scene="empty" />

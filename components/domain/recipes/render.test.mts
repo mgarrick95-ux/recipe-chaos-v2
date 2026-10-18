@@ -175,3 +175,15 @@ it('recipe pages share a scoped, legible storybook surface without changing reci
   assert.match(globalCss, /\.recipe-world \.recipe-hero \.page-title/);
   assert.match(globalCss, /\.recipe-world \.recipe-card \.section-title/);
 });
+
+it('recipe collection presents searchable, sortable filters without editing records', async () => {
+  const html = renderToStaticMarkup(await LibraryPage());
+  assert.match(html, /Search your recipes/);
+  assert.match(html, /Sort recipes/);
+  assert.match(html, /Keepers only/);
+  assert.match(html, /aria-pressed="false"/);
+  assert.match(html, /value="newest"/);
+  assert.match(html, /value="az"/);
+  assert.ok(!html.includes('2 cloves'));
+  assert.match(globalCss, /\.recipe-filters/);
+});

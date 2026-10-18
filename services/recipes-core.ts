@@ -2,12 +2,12 @@ import { acceptCanonicalSuggestion, leaveNeedsReview, remainUnlinked, selectCano
 import type { RecipeAggregate, RecipeDraft, RecipeIngredient } from "../domain/recipes/types.ts";
 import { isUuid, validateRecipe } from "../domain/recipes/validation.ts";
 import { err, ok, type ServiceResult } from "./result.ts";
-import { mapRecipeAggregate, mapRecipeSummary, toSaveRecipeRpcArgs, type RecipeIngredientRow, type RecipeRow, type RecipeStepRow, type RecipeSummary, type SaveRecipeRpcArgs } from "./recipe-mappers.ts";
+import { mapRecipeAggregate, mapRecipeSummary, toSaveRecipeRpcArgs, type RecipeIngredientRow, type RecipeListRow, type RecipeRow, type RecipeStepRow, type RecipeSummary, type SaveRecipeRpcArgs } from "./recipe-mappers.ts";
 
 export type DatabaseError = { code?: string; message?: string; details?: string | null; hint?: string | null };
 export type DatabaseResult<T> = Promise<{ data: T; error: DatabaseError | null }>;
 export type RecipeGateway = {
-  list(householdId: string): DatabaseResult<RecipeRow[]>;
+  list(householdId: string): DatabaseResult<RecipeListRow[]>;
   getRecipe(householdId: string, recipeId: string): DatabaseResult<RecipeRow | null>;
   getIngredients(recipeId: string): DatabaseResult<RecipeIngredientRow[]>;
   getSteps(recipeId: string): DatabaseResult<RecipeStepRow[]>;

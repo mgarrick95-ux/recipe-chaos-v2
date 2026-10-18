@@ -266,3 +266,19 @@ it('unauthorized and conflicted actions do not invalidate routes', async () => {
   assert.equal(result.ok ? 'success' : result.error.code, 'conflict');
   assert.deepEqual(revalidated, []);
 });
+
+it('library listing indexes authored ingredient and step text in one household-scoped read', async () => {
+  replies.push(reply([{ ...row,
+    recipe_ingredients: [{ original_text: original }],
+    recipe_steps: [{ instruction: 'Simmer garlic slowly' }],
+  }]));
+  const result = await recipes.listRecipes();
+  assert.ok(result.ok);
+  assert.match(result.data[0].searchText ?? '', /½ garlic, minced/);
+  assert.match(result.data[0].searchText ?? '', /Simmer garlic slowly/);
+  assert.equal(calls.filter(call => call.name === 'from').length, 1);
+  const select = calls.find(call => call.name === 'select');
+  assert.match(String(select?.args[0]), /recipe_ingredients\(original_text\)/);
+  assert.match(String(select?.args[0]), /recipe_steps\(instruction\)/);
+  assert.ok(calls.some(call => call.name === 'eq' && call.args[0] === 'household_id' && call.args[1] === householdId));
+});

@@ -15,7 +15,7 @@ async function currentService(): Promise<ServiceResult<ReturnType<typeof createR
   const supabase = await createServerSupabaseClient();
   const gateway: RecipeGateway = {
     async list(householdId) {
-      const result = await supabase.from("recipes").select("*").eq("household_id", householdId).order("is_favorite", { ascending: false }).order("updated_at", { ascending: false }).order("title", { ascending: true });
+      const result = await supabase.from("recipes").select("*, recipe_ingredients(original_text), recipe_steps(instruction)").eq("household_id", householdId).order("is_favorite", { ascending: false }).order("updated_at", { ascending: false }).order("title", { ascending: true });
       return { data: result.data ?? [], error: result.error };
     },
     async getRecipe(householdId, recipeId) {
