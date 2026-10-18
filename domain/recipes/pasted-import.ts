@@ -4,7 +4,7 @@ export type PastedRecipeResult =
   | { ok: true; draft: ManualRecipeInput }
   | { ok: false; message: string };
 
-type Section = 'intro' | 'ingredients' | 'steps' | 'notes';
+type Section = 'intro' | 'ingredients' | 'steps' | 'notes' | 'ignore';
 
 function heading(line: string): Section | null {
   const normalized = line.trim()
@@ -15,6 +15,7 @@ function heading(line: string): Section | null {
   if (/^(?:ingredients|what you need)$/u.test(normalized)) return 'ingredients';
   if (/^(?:directions|instructions|method|steps|preparation|how to make it)$/u.test(normalized)) return 'steps';
   if (/^(?:notes|tips|cook's notes)$/u.test(normalized)) return 'notes';
+  if (/^(?:nutrition|nutrition facts|reviews|comments|related recipes|you may also like|equipment|faq|frequently asked questions)$/u.test(normalized)) return 'ignore';
   return null;
 }
 
@@ -36,7 +37,7 @@ export function parsePastedRecipe(text: string, enteredTitle = ''): PastedRecipe
   }
 
   const parts: Record<Section, string[]> = {
-    intro: [], ingredients: [], steps: [], notes: [],
+    intro: [], ingredients: [], steps: [], notes: [], ignore: [],
   };
   let section: Section = 'intro';
   let foundIngredients = false;
@@ -45,11 +46,19 @@ export function parsePastedRecipe(text: string, enteredTitle = ''): PastedRecipe
     const next = heading(line);
     if (next) {
       section = next;
-      if (next === 'ingredients') foundIngredients = true;
-      if (next === 'steps') foundSteps = true;
+      if (next === 'ingredients') {
+        // Full article copies can contain an earlier unmeasured teaser list.
+        // The last real Ingredients section usually belongs to the recipe card.
+        parts.ingredients = [];
+        foundIngredients = true;
+      }
+      if (next === 'steps') {
+        parts.steps = [];
+        foundSteps = true;
+      }
       continue;
     }
-    parts[section].push(line);
+    if (section !== 'ignore') parts[section].push(line);
   }
 
   if (!foundIngredients || !foundSteps) {

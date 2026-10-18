@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { parsePastedRecipe } from '@/domain/recipes/pasted-import';
+import { parseRecipePage } from '@/domain/recipes/import-preview';
 import type { ManualRecipeInput } from '@/domain/recipes/manual-entry';
 import { RecipeForm } from './recipe-form';
 
@@ -53,6 +54,21 @@ export function RecipeImport() {
     setPreview({ draft: result.draft, version: Date.now() });
   }
 
+  function pasteRecipeCard(event: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const html = event.clipboardData.getData('text/html');
+    if (!html || html.length > 6_000_000) return;
+    // Source metadata is advisory only; never fetch the clipboard URL.
+    const sourceUrl = /^https:\/\//iu.test(url.trim()) ? url.trim() : '';
+    const draft = parseRecipePage(html, sourceUrl);
+    if (!draft || !draft.ingredients.length || !draft.steps.length) return;
+    // The browser can copy the recipe card's DOM even if the publisher refuses
+    // our server's network request. We extract text only; scripts never run.
+    event.preventDefault();
+    setError('');
+    setPastedError('');
+    setPreview({ draft, version: Date.now() });
+  }
+
   return <div className="space-y-7">
     <form className="recipe-import-controls space-y-4" onSubmit={previewLink}>
       <h2 className="section-title">Import from a website</h2>
@@ -77,8 +93,10 @@ export function RecipeImport() {
     <section className="recipe-import-controls space-y-4" aria-labelledby="paste-recipe-title">
       <h2 id="paste-recipe-title" className="section-title">Or paste a recipe</h2>
       <p className="muted text-sm leading-6">
-        Website refusing to cooperate? Copy the recipe text here. Keep the
-        Ingredients and Instructions headings so Grimmy can tell them apart.
+        Website refusing to cooperate? Open its <strong>Print Recipe</strong> page,
+        select and copy the recipe (Ctrl+A, Ctrl+C), then paste it here.
+        Grimmy can recognize some copied recipe cards automatically.
+        Otherwise, keep the Ingredients and Instructions headings.
         Everything stays editable before saving.
       </p>
       <form className="space-y-4" onSubmit={previewPasted}>
@@ -91,7 +109,8 @@ export function RecipeImport() {
         <div>
           <label htmlFor="paste-recipe-text" className="field-label">Recipe text</label>
           <textarea id="paste-recipe-text" required rows={10} maxLength={25000} disabled={busy}
-            value={pastedText} onChange={event => setPastedText(event.target.value)}
+            value={pastedText} onPaste={pasteRecipeCard}
+            onChange={event => setPastedText(event.target.value)}
             placeholder={'Chicken Soup\n\nIngredients\n2 cups chicken stock\n1 carrot, chopped\n\nInstructions\n1. Add ingredients to the pot.\n2. Simmer until tender.'} />
         </div>
         <button type="submit" className="btn btn-primary maker-btn" disabled={busy}>✦ Make editable draft</button>

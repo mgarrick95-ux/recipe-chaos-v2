@@ -2,9 +2,14 @@ import 'server-only';
 
 import { lookup } from 'node:dns/promises';
 import { request as httpsRequest } from 'node:https';
+import { Readable, Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import { createGunzip, createInflate, createBrotliDecompress } from 'node:zlib';
 import { isPublicRecipeIPv4, validateRecipeImportUrl } from '@/domain/recipes/import-urls';
 
-export const MAX_RECIPE_HTML_BYTES = 1_250_000;
+// Large food blogs routinely embed extensive images/scripts around a recipe.
+export const MAX_RECIPE_HTML_BYTES = 6_000_000;
+const MAX_RECIPE_WIRE_BYTES = 6_000_000;
 const MAX_REDIRECTS = 3;
 
 export type RecipeWebsiteResponse = {
@@ -68,13 +73,21 @@ export async function loadPublicRecipePage(
     if (!ips.length || ips.length > 30 || ips.some(ip => !isPublicRecipeIPv4(ip))) {
       throw new RecipeWebsiteError('blocked');
     }
-    let response: RecipeWebsiteResponse;
-    try {
-      response = await transport.requestPage(pageUrl, ips[0]);
-    } catch (error) {
-      if (error instanceof RecipeWebsiteError) throw error;
-      throw new RecipeWebsiteError('connection');
+    let response: RecipeWebsiteResponse | undefined;
+    // A public domain can resolve to several CDN IPv4 addresses. A single
+    // bad edge node should not prevent the import. Each attempt is pinned to
+    // one of the already-validated addresses; never retry a denied HTTP page.
+    for (const ip of ips.slice(0, 4)) {
+      try {
+        response = await transport.requestPage(pageUrl, ip);
+        break;
+      } catch (error) {
+        if (error instanceof RecipeWebsiteError && error.kind !== 'connection') {
+          throw error;
+        }
+      }
     }
+    if (!response) throw new RecipeWebsiteError('connection');
 
     if (response.status >= 300 && response.status < 400) {
       if (!response.location) throw new RecipeWebsiteError('redirect');
@@ -100,6 +113,45 @@ export async function loadPublicRecipePage(
   throw new RecipeWebsiteError('redirect');
 }
 
+/**
+ * Decode compressed blog HTML while bounding both network bytes and expanded
+ * bytes. This is a pure stream helper so gzip/Brotli limits can be unit tested.
+ */
+export async function decodeRecipeHtml(stream: Readable, encoding: string): Promise<string> {
+  const normalized = encoding.toLowerCase().trim() || 'identity';
+  if (!['identity', 'gzip', 'br', 'deflate'].includes(normalized)) {
+    throw new RecipeWebsiteError('content');
+  }
+  const chunks: Buffer[] = [];
+  let wireBytes = 0;
+  let decodedBytes = 0;
+  const wireLimit = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      wireBytes += chunk.byteLength;
+      if (wireBytes > MAX_RECIPE_WIRE_BYTES) callback(new RecipeWebsiteError('too_large'));
+      else callback(null, chunk);
+    },
+  });
+  const bodyLimit = new Transform({
+    transform(chunk: Buffer, _encoding, callback) {
+      decodedBytes += chunk.byteLength;
+      if (decodedBytes > MAX_RECIPE_HTML_BYTES) callback(new RecipeWebsiteError('too_large'));
+      else {
+        chunks.push(Buffer.from(chunk));
+        callback();
+      }
+    },
+  });
+  const decoder = normalized === 'gzip' ? createGunzip()
+    : normalized === 'br' ? createBrotliDecompress()
+    : normalized === 'deflate' ? createInflate() : null;
+
+  // pipeline propagates decompression errors and ends both streams on limit.
+  if (decoder) await pipeline(stream, wireLimit, decoder, bodyLimit);
+  else await pipeline(stream, wireLimit, bodyLimit);
+  return Buffer.concat(chunks).toString('utf8');
+}
+
 const productionTransport: RecipeWebsiteTransport = {
   // Use the OS resolver (including the user's configured Windows DNS) rather
   // than an independent DNS query. Every answer is still checked and the
@@ -118,9 +170,10 @@ const productionTransport: RecipeWebsiteTransport = {
       },
       signal: AbortSignal.timeout(9000),
       headers: {
-        Accept: 'text/html,application/xhtml+xml',
-        'Accept-Encoding': 'identity',
-        'User-Agent': 'RecipeChaosPreview/0.2 (user-requested recipe import)',
+        Accept: 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
+        'Accept-Encoding': 'gzip, br, deflate',
+        'Accept-Language': 'en-CA,en;q=0.9',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       },
     }, response => {
       const status = response.statusCode ?? 0;
@@ -135,29 +188,18 @@ const productionTransport: RecipeWebsiteTransport = {
         resolve({ status, location, contentType, html: '' });
         return;
       }
-      if ((contentEncoding && contentEncoding !== 'identity') ||
-        (Number.isFinite(contentLength) && contentLength > MAX_RECIPE_HTML_BYTES)) {
+      const encoding = typeof contentEncoding === 'string' ? contentEncoding : 'identity';
+      if (Number.isFinite(contentLength) && contentLength > MAX_RECIPE_WIRE_BYTES) {
         response.destroy();
-        reject(new RecipeWebsiteError(
-          contentEncoding && contentEncoding !== 'identity' ? 'content' : 'too_large',
-        ));
+        reject(new RecipeWebsiteError('too_large'));
         return;
       }
-
-      void (async () => {
-        const chunks: Buffer[] = [];
-        let length = 0;
-        for await (const chunk of response) {
-          const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-          length += buffer.byteLength;
-          if (length > MAX_RECIPE_HTML_BYTES) {
-            response.destroy();
-            throw new RecipeWebsiteError('too_large');
-          }
-          chunks.push(buffer);
-        }
-        resolve({ status, location: null, contentType, html: Buffer.concat(chunks).toString('utf8') });
-      })().catch(reject);
+      void decodeRecipeHtml(response, encoding).then(html => {
+        resolve({ status, location: null, contentType, html });
+      }).catch(error => {
+        reject(error instanceof RecipeWebsiteError
+          ? error : new RecipeWebsiteError('connection'));
+      });
     });
     request.on('error', reject);
     request.end();

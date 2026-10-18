@@ -103,3 +103,42 @@ it('refuses ambiguous paste content instead of mixing ingredients with steps', (
   }
   assert.equal(parsePastedRecipe(example.repeat(2500)).ok, false);
 });
+
+
+it('extracts the actual ingredient card from a full copied food-blog page', () => {
+  const copied = [
+    'Half Baked Harvest',
+    'Parmesan Garlic Butter Crusted Halibut',
+    'These are the Details',
+    'Ingredients',
+    'halibut',
+    'panko',
+    'parmesan',
+    'Kitchen Tools',
+    'Read the article and the cooking tips',
+    'Ingredients',
+    '4 halibut fillets',
+    '1/2 cup panko breadcrumbs',
+    '2 cloves garlic, grated',
+    'Instructions',
+    '1. Preheat the oven to 425°F.',
+    '2. Bake for 15-20 minutes.',
+    'Nutrition',
+    'Calories: 400 kcal',
+    'Comments',
+    'I made this for dinner!',
+  ].join('\n');
+  const parsed = parsePastedRecipe(copied, 'Parmesan Garlic Butter Crusted Halibut');
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+  assert.deepEqual(parsed.draft.ingredients.map(i => i.originalText), [
+    '4 halibut fillets',
+    '1/2 cup panko breadcrumbs',
+    '2 cloves garlic, grated',
+  ]);
+  assert.deepEqual(parsed.draft.steps.map(s => s.instruction), [
+    'Preheat the oven to 425°F.',
+    'Bake for 15-20 minutes.',
+  ]);
+  assert.ok(!parsed.draft.notes.includes('Calories'));
+});

@@ -71,6 +71,14 @@ it('the importer offers an editable pasted-text fallback for blocked websites', 
   assert.match(parser, /foundSteps/);
 });
 
+it('can extract a copied HTML recipe card directly from the browser clipboard', () => {
+  const importer = at('components/domain/recipes/recipe-import.tsx');
+  assert.match(importer, /onPaste=\{pasteRecipeCard\}/u);
+  assert.match(importer, /event\.clipboardData\.getData\('text\/html'\)/u);
+  assert.match(importer, /parseRecipePage\(html,\s*sourceUrl\)/u);
+  assert.match(importer, /<RecipeForm key=\{preview\.version\} initialDraft=\{preview\.draft\}/u);
+});
+
 it('the helper and importer use a readable enchanted style with mobile support', () => {
   const css = at('app/globals.css');
   assert.match(css, /\.grimmy-helper-dialog/);

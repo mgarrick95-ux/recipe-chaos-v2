@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { Readable } from 'node:stream';
+import { gzipSync, brotliCompressSync, deflateSync } from 'node:zlib';
 import { it } from 'node:test';
 
 const require = createRequire(import.meta.url);
@@ -19,7 +21,7 @@ registerHooks({
   },
 });
 
-const { loadPublicRecipePage, RecipeWebsiteError, MAX_RECIPE_HTML_BYTES } =
+const { loadPublicRecipePage, RecipeWebsiteError, MAX_RECIPE_HTML_BYTES, decodeRecipeHtml } =
   await import('./recipe-web-fetch.ts');
 
 type Transport = NonNullable<Parameters<typeof loadPublicRecipePage>[1]>;
@@ -199,4 +201,69 @@ it('does not send another request when private IP addresses appear in DNS', asyn
     requestPage: async () => { attempted = true; throw Error('Unexpected request'); },
   })), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'blocked');
   assert.equal(attempted, false);
+});
+
+
+it('decodes normal, gzip, brotli and deflate HTML streams correctly', async () => {
+  const html = '<html><h1>Soup with garlic &amp; potatoes</h1></html>';
+  for (const [encoding, buffer] of [
+    ['identity', Buffer.from(html)],
+    ['gzip', gzipSync(html)],
+    ['br', brotliCompressSync(html)],
+    ['deflate', deflateSync(html)],
+  ] as const) {
+    const decoded = await decodeRecipeHtml(Readable.from([buffer]), encoding);
+    assert.equal(decoded, html, encoding);
+  }
+});
+
+it('rejects compressed pages that expand beyond the safe HTML limit', async () => {
+  const compressed = gzipSync('x'.repeat(MAX_RECIPE_HTML_BYTES + 500));
+  await assert.rejects(() => decodeRecipeHtml(Readable.from([compressed]), 'gzip'),
+    (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'too_large');
+});
+
+it('rejects oversized uncompressed pages and unsupported encodings', async () => {
+  await assert.rejects(() => decodeRecipeHtml(
+    Readable.from([Buffer.alloc(MAX_RECIPE_HTML_BYTES + 1, 'x')]), 'identity',
+  ), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'too_large');
+  await assert.rejects(() => decodeRecipeHtml(
+    Readable.from([Buffer.from('body')]), 'x-custom-encoding',
+  ), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'content');
+});
+
+it('can try a second validated CDN IPv4 if the first connection fails', async () => {
+  const attempted: string[] = [];
+  const loaded = await loadPublicRecipePage(start, testTransport({
+    resolveHost: async () => ['104.21.2.2', '76.76.21.21'],
+    requestPage: async (_url, verifiedIp) => {
+      attempted.push(verifiedIp);
+      if (verifiedIp === '104.21.2.2') throw Error('CDN edge not responding');
+      return { status: 200, contentType: 'text/html', location: null, html: 'Soup!' };
+    },
+  }));
+  assert.deepEqual(attempted, ['104.21.2.2', '76.76.21.21']);
+  assert.equal(loaded.html, 'Soup!');
+});
+
+it('never retries a server refusal, private address, or size error on another CDN address', async () => {
+  const ips = ['104.21.2.2', '76.76.21.21'];
+  let requests = 0;
+  await assert.rejects(() => loadPublicRecipePage(start, testTransport({
+    resolveHost: async () => ips,
+    requestPage: async () => {
+      requests++;
+      return { status: 403, contentType: '', location: null, html: '' };
+    },
+  })), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'denied');
+  assert.equal(requests, 1);
+  requests = 0;
+  await assert.rejects(() => loadPublicRecipePage(start, testTransport({
+    resolveHost: async () => ips,
+    requestPage: async () => {
+      requests++;
+      throw new RecipeWebsiteError('too_large');
+    },
+  })), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'too_large');
+  assert.equal(requests, 1);
 });
