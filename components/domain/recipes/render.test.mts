@@ -187,3 +187,22 @@ it('recipe collection presents searchable, sortable filters without editing reco
   assert.ok(!html.includes('2 cloves'));
   assert.match(globalCss, /\.recipe-filters/);
 });
+
+
+it('import previews render inside the real editable recipe form, not a separate saving path', () => {
+  const draft = {
+    title: 'Imported garlic soup', description: 'Soup from a website',
+    sourceUrl: 'https://www.budgetbytes.com/soup/',
+    servings: '4', yieldText: '4 servings', notes: '', isFavorite: false,
+    ingredients: [{ originalText: '2 cloves garlic' }, { originalText: '1 cup stock' }],
+    steps: [{ instruction: 'Bring to a boil.' }],
+  };
+  const html = renderToStaticMarkup(createElement(RecipeForm, { initialDraft: draft }));
+  assert.match(html, /value="Imported garlic soup"/);
+  assert.match(html, /2 cloves garlic/);
+  assert.match(html, /1 cup stock/);
+  assert.match(html, /Bring to a boil/);
+  assert.match(html, /budgetbytes\.com\/soup/);
+  assert.match(html, /Save recipe/);
+  assert.equal((html.match(/required=""/g) ?? []).length, 4);
+});

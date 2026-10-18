@@ -4,17 +4,20 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useRef, useState, useTransition } from 'react';
 import { saveRecipeAction } from '@/app/recipes/actions';
-import { moveRow, recipeToInput } from '@/domain/recipes/manual-entry';
+import { moveRow, recipeToInput, type ManualRecipeInput } from '@/domain/recipes/manual-entry';
 import type { RecipeAggregate } from '@/domain/recipes/types';
 import type { ServiceError } from '@/services/result';
 import { RowEditor } from './row-editor';
 import { recipeErrorMessage } from './messages';
 
-export function RecipeForm({ recipe }: { recipe?: RecipeAggregate }) {
+export function RecipeForm({ recipe, initialDraft }: { recipe?: RecipeAggregate; initialDraft?: ManualRecipeInput }) {
   const router = useRouter();
-  const [fields, setFields] = useState(() => recipeToInput(recipe));
-  const [ingredients, setIngredients] = useState(() => recipeToInput(recipe).ingredients.map((row) => ({ ...row, key: row.id! })));
-  const [steps, setSteps] = useState(() => recipeToInput(recipe).steps.map((row) => ({ ...row, key: row.id! })));
+  // Imported drafts are editable copies; none of their contents are saved on preview.
+  const [fields, setFields] = useState(() => initialDraft ?? recipeToInput(recipe));
+  const [ingredients, setIngredients] = useState(() => (initialDraft ?? recipeToInput(recipe)).ingredients
+    .map((row, index) => ({ ...row, key: row.id ?? `imported-ingredient-${index}` })));
+  const [steps, setSteps] = useState(() => (initialDraft ?? recipeToInput(recipe)).steps
+    .map((row, index) => ({ ...row, key: row.id ?? `imported-step-${index}` })));
   const nextKey = useRef(0);
   const [error, setError] = useState<ServiceError | null>(null);
   const [pending, startTransition] = useTransition();
@@ -60,7 +63,10 @@ export function RecipeForm({ recipe }: { recipe?: RecipeAggregate }) {
           onMove={(direction) => setSteps((rows) => moveRow(rows, index, direction))} />)}
         <button type="button" className="btn maker-btn mt-1" onClick={() => { const key = `new-${nextKey.current++}`; setSteps((rows) => [...rows, { key, instruction: '' }]); }}>+ Add step</button>
       </section>
-      <details className="recipe-form-section" open={recipe && Boolean(recipe.sourceUrl || recipe.servings || recipe.yieldText || recipe.notes) ? true : undefined}>
+      <details className="recipe-form-section" open={Boolean(
+        recipe?.sourceUrl || recipe?.servings || recipe?.yieldText || recipe?.notes ||
+        initialDraft?.sourceUrl || initialDraft?.servings || initialDraft?.yieldText || initialDraft?.notes
+      ) || undefined}>
         <summary className="section-title">A few extra details <span className="muted text-sm font-normal">· optional</span></summary>
         <p className="muted mt-2 text-sm">Useful little facts, if you’ve got them.</p>
         <div className="mt-5 space-y-5">

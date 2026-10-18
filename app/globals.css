@@ -728,3 +728,131 @@
   border-color: #3b977d;
 }
 .enchanted-plan .meal-brain-card .btn-primary:hover:not(:disabled) { background: #98e7d1; }
+
+
+/* Review-before-save recipe importing and discovery. */
+.recipe-world .recipe-hero-links .btn { min-height: 2.95rem; }
+.recipe-import-controls, .recipe-import-ready {
+  border: 1px solid rgba(97, 67, 60, .36);
+  border-radius: .5rem 1.1rem .4rem .85rem;
+  padding: clamp(1rem, 2.4vw, 1.5rem);
+  background: rgba(255, 247, 227, .62);
+}
+.recipe-import-ready {
+  background: linear-gradient(135deg, rgba(57, 48, 54, .95), rgba(28, 42, 37, .97));
+  color: #f3e7cf;
+  border-color: #a7866d;
+}
+.recipe-world .recipe-import-ready .section-title { color: #fff0d5; }
+.recipe-world .recipe-import-ready .muted { color: #e0cbb4; }
+.recipe-world .recipe-import-ready .eyebrow { color: #d0a8ca; }
+.recipe-world .recipe-import-controls input {
+  background: #fff9ec;
+  color: #2b2b22;
+  border: 1px solid #93775d;
+}
+.recipe-world .recipe-import-controls input::placeholder { color: #776959; }
+.recipe-finder-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+}
+.recipe-finder-card {
+  border: 1px solid #9f8467;
+  border-left: 4px solid #8b6b8a;
+  border-radius: .6rem .35rem .85rem .4rem;
+  padding: 1.2rem;
+  background: rgba(255, 248, 234, .86);
+  color: #2c2924;
+  box-shadow: 0 6px 16px rgba(69, 46, 36, .1);
+}
+.recipe-finder-card h3 { color: #352739; font-size: 1.25rem; font-weight: 700; }
+.recipe-world .recipe-finder-card .muted { color: #64584d; }
+
+/* One approachable helper throughout the kitchen—not a fake chatbot. */
+.grimmy-helper {
+  position: fixed;
+  z-index: 60;
+  right: max(.75rem, env(safe-area-inset-right));
+  bottom: max(.75rem, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  gap: .65rem;
+  width: min(23rem, calc(100vw - 1.5rem));
+  pointer-events: none;
+}
+.grimmy-helper > * { pointer-events: auto; }
+.grimmy-helper-trigger {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  min-height: 3.2rem;
+  border: 1px solid #bca073;
+  border-radius: 1.1rem .55rem 1.1rem .5rem;
+  padding: .3rem .95rem .3rem .5rem;
+  background: linear-gradient(140deg, #29272e, #192b26);
+  color: #ffedd2;
+  box-shadow: 0 8px 26px rgba(0,0,0,.35);
+  font-weight: 700;
+}
+.grimmy-helper-trigger:hover { background: #3a2f40; }
+.grimmy-helper-trigger img { object-fit: contain; width: 2.5rem; height: 2.65rem; }
+.grimmy-helper-dialog {
+  width: 100%;
+  max-height: min(36rem, calc(100dvh - 7rem));
+  overflow-y: auto;
+  border: 1px solid #bda075;
+  border-radius: 1rem .5rem 1.1rem .45rem;
+  padding: 1.1rem;
+  background: linear-gradient(150deg, #292330, #202f28 78%);
+  color: #f7ecd9;
+  box-shadow: 0 15px 45px rgba(0,0,0,.5), inset 0 0 0 4px rgba(255,239,202,.04);
+}
+.grimmy-helper-top { display: flex; gap: .75rem; align-items: center; }
+.grimmy-helper-image { width: 3.7rem; height: 3.9rem; object-fit: contain; }
+.grimmy-helper-kicker {
+  color: #c9a5c6; font-size: .63rem; letter-spacing: .15em; text-transform: uppercase;
+}
+.grimmy-helper-title {
+  font-family: ui-serif, Georgia, serif; font-size: 1.3rem; font-weight: 700; color: #fff0d6;
+}
+.grimmy-helper-close {
+  margin-left: auto; align-self: start;
+  border: 1px solid #866f7c; border-radius: .4rem;
+  width: 2rem; height: 2rem; color: #f7e0dc; font-size: 1.5rem;
+}
+.grimmy-helper-close:hover { background: #55354a; }
+.grimmy-helper-message { margin: .8rem 0 1rem; color: #e6d9c8; font-size: .85rem; line-height: 1.55; }
+.grimmy-helper-search label { display: block; color: #f5e6ce; font-size: .8rem; font-weight: 650; margin-bottom: .4rem; }
+.grimmy-helper-search-controls { display: flex; gap: .45rem; }
+.grimmy-helper-search-controls input {
+  width: min(100%, 16rem) !important; min-width: 0; flex: 1;
+  border: 1px solid #b39b76 !important; border-radius: .5rem !important;
+  padding: .6rem .7rem !important;
+  background: #fff4da !important; color: #302722 !important;
+}
+.grimmy-helper-search-controls input::placeholder { color: #756757; }
+.grimmy-helper-search-controls button {
+  min-height: 2.7rem; border-radius: .45rem;
+  border: 1px solid #3a9a7e; padding: .4rem .8rem;
+  background: #79dec4; color: #15342d; font-size: .8rem; font-weight: 750;
+}
+.grimmy-helper-search-controls button:hover { background: #a0ead7; }
+.grimmy-helper-links { display: grid; gap: .5rem; margin-top: 1rem; }
+.grimmy-helper-links a {
+  display: flex; flex-direction: column; gap: .15rem;
+  padding: .65rem .8rem; border: 1px solid rgba(197,174,137,.4);
+  border-radius: .45rem .7rem .4rem .6rem;
+  background: rgba(255,247,219,.07);
+  color: #f9e9ca;
+}
+.grimmy-helper-links a:hover, .grimmy-helper-links a:focus-visible { background: rgba(255,247,219,.16); }
+.grimmy-helper-links a span { font-size: .85rem; font-weight: 700; }
+.grimmy-helper-links a small { color: #bed2c9; font-size: .7rem; }
+.grimmy-helper-disclaimer { margin-top: 1rem; color: #cbbfae; font-size: .72rem; line-height: 1.4; }
+@media (max-width: 640px) {
+  .grimmy-helper-trigger { min-height: 2.85rem; }
+  .grimmy-helper-trigger img { height: 2.1rem; width: 2rem; }
+  .grimmy-helper-dialog { max-height: calc(100dvh - 6.5rem); }
+}
