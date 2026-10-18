@@ -158,3 +158,20 @@ it('sign-in cannot serialize credentials into a native GET URL before hydration'
   assert.match(html, /<button[^>]*disabled=""/);
   assert.match(html, /JavaScript is required to sign in/);
 });
+
+it('recipe pages share a scoped, legible storybook surface without changing recipe actions', async () => {
+  const library = renderToStaticMarkup(await LibraryPage());
+  const detail = renderToStaticMarkup(await DetailPage({ params: Promise.resolve({ id }) }));
+  assert.match(library, /recipe-world/);
+  assert.match(library, /recipe-collection-heading/);
+  assert.match(library, /recipe-grid-single/);
+  assert.match(library, /From the recipe box/);
+  assert.match(detail, /recipe-world-detail/);
+  assert.match(detail, /recipe-sheet--ingredients/);
+  assert.match(detail, /recipe-sheet--steps/);
+  assert.match(detail, /Edit recipe/);
+  assert.match(detail, /Delete recipe/);
+  assert.match(globalCss, /--recipe-paper: #ead8b9/);
+  assert.match(globalCss, /\.recipe-world \.recipe-hero \.page-title/);
+  assert.match(globalCss, /\.recipe-world \.recipe-card \.section-title/);
+});

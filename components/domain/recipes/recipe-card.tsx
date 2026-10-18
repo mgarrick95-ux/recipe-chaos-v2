@@ -2,7 +2,8 @@ import Link from 'next/link';
 import type { RecipeSummary } from '@/services/recipe-mappers';
 
 export function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
-  return <Link href={`/recipes/${recipe.id}`} className="recipe-card group flex min-h-44 flex-col gap-3 p-5 sm:p-6">
+  return <Link href={`/recipes/${recipe.id}`} className="recipe-card group flex min-h-48 flex-col gap-3 p-5 sm:p-6">
+    <span className="recipe-card-tag" aria-hidden="true">From the recipe box</span>
     <div className="flex items-start justify-between gap-3">
       <h2 className="section-title transition-colors group-hover:text-teal-200">{recipe.title}</h2>
       {recipe.isFavorite && <span className="recipe-keeper shrink-0" aria-label="Keeper recipe"><span aria-hidden="true">★ </span>Keeper</span>}
