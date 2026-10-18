@@ -7,5 +7,5 @@ export default async function EditRecipePage({ params }: { params: Promise<{ id:
   const { id } = await params;
   const result = await getRecipe(id);
   if (!result.ok) return <LoadError error={result.error} />;
-  return <div className="mx-auto max-w-3xl"><Link href={`/recipes/${id}`} className="text-link text-sm">← Back to recipe</Link><div className="mb-8 mt-7"><p className="eyebrow mb-3">A little fine-tuning</p><h1 className="page-title">Edit recipe</h1></div><RecipeForm recipe={result.data} /></div>;
+  return <div className="mx-auto max-w-4xl"><Link href={`/recipes/${id}`} className="text-link text-sm">← Back to recipe</Link><header className="recipe-page-intro"><p className="eyebrow mb-3">A little fine-tuning</p><h1 className="page-title">Edit recipe</h1><p className="muted mt-3 max-w-2xl leading-7">Tidy the bits that changed. The rest can stay exactly where you left it.</p></header><RecipeForm recipe={result.data} /></div>;
 }

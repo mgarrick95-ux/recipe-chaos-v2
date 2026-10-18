@@ -239,5 +239,5 @@ function mapInventoryItem(row: InventoryRow): InventoryItem {
 }
 
 function reportInventoryError(operation: string, error: { code?: string; message?: string; details?: string | null; hint?: string | null }): void {
-  console.error(`[inventory] ${operation} failed`, { code: error.code, message: error.message, details: error.details, hint: error.hint });
+  console.error(`[inventory] ${operation} failed`, { code: /^(?:[0-9A-Z]{5}|PGRST[0-9]{3})$/.test(error.code ?? '') ? error.code : undefined });
 }

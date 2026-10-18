@@ -22,10 +22,14 @@ export function RecipeActions({ id, isFavorite, updatedAt }: { id: string; isFav
     });
   }
   return <div className="space-y-3">
-    <div className="flex flex-wrap gap-2">
-      <Link href={`/recipes/${id}/edit`} className="btn btn-primary">Edit recipe</Link>
-      <button className="btn" disabled={pending} aria-pressed={isFavorite} onClick={() => mutate('favorite')}><span aria-hidden="true">{isFavorite ? '★' : '☆'}</span>{isFavorite ? 'Unfavorite' : 'Favorite'}</button>
-      <button className="btn btn-danger" disabled={pending} onClick={() => mutate('delete')}>Delete</button>
+    <div className="recipe-actions flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+        <Link href={`/recipes/${id}/edit`} className="btn btn-primary maker-btn">Edit recipe</Link>
+        <button className="btn maker-btn" disabled={pending} aria-pressed={isFavorite} onClick={() => mutate('favorite')}><span aria-hidden="true">{isFavorite ? '★' : '☆'}</span>{isFavorite ? 'Remove from favorites' : 'Mark as favorite'}</button>
+      </div>
+      <div className="w-full border-t border-white/10 pt-4 sm:w-auto sm:border-l sm:border-t-0 sm:pl-4 sm:pt-0">
+        <button className="text-sm text-rose-200 underline decoration-rose-200/30 underline-offset-4 hover:decoration-rose-200" disabled={pending} onClick={() => mutate('delete')}>Delete recipe</button>
+      </div>
     </div>
     {pending && <p role="status" className="muted text-sm">Saving your change…</p>}
     {message && <div role="alert" className="error-message">{message} <a href={`/recipes/${id}`} className="text-link">Reload recipe</a></div>}

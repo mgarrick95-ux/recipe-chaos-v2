@@ -14,12 +14,13 @@ import type { RecipeAggregate } from '../../../domain/recipes/types.ts';
 // All auth, data, and mutation boundaries are local fakes in this test process.
 const id = '00000000-0000-4000-8000-000000000001';
 const token = '2026-09-05T12:00:00.123456+00:00';
+const globalCss = readFileSync(new URL('../../../app/globals.css', import.meta.url), 'utf8');
 const recipe: RecipeAggregate = { ...createRecipeDraft('Garlic & greens'), id, householdId: id, createdBy: id, createdAt: token, updatedAt: token,
   description: 'A weeknight keeper.', sourceUrl: 'https://example.com/recipe', notes: '  Add lemon.  ', isFavorite: true,
   ingredients: [{ ...createRecipeIngredient({ originalText: '  2 cloves garlic, minced  ' }, 0), id, createdAt: token, updatedAt: token, verificationState: 'needs_review' }],
   steps: [{ id, position: 0, instruction: '  Stir gently.  ', createdAt: token, updatedAt: token }],
 };
-Object.assign(globalThis, { renderRecipe: recipe });
+Object.assign(globalThis, { renderRecipe: recipe, renderRecipes: [recipe] });
 const require = createRequire(import.meta.url);
 type Resolution = { url: string; shortCircuit?: boolean };
 type Context = { parentURL?: string };
@@ -32,10 +33,11 @@ registerHooks({
   resolve(specifier, context, next) {
     if (specifier === 'next/navigation') return dataModule('export const useRouter=()=>({push(){},replace(){},refresh(){}}); export function redirect(){throw Error("redirect")}; export function notFound(){throw Error("not found")}');
     if (specifier === '@/app/recipes/actions') return dataModule('export async function saveRecipeAction(){}; export async function favoriteRecipeAction(){}; export async function deleteRecipeAction(){}');
-    if (specifier === '@/services/recipes') return dataModule('export async function getRecipe(){return {ok:true,data:globalThis.renderRecipe}}; export async function listRecipes(){return {ok:true,data:[globalThis.renderRecipe]}}');
+    if (specifier === '@/services/recipes') return dataModule('export async function getRecipe(){return {ok:true,data:globalThis.renderRecipe}}; export async function listRecipes(){return {ok:true,data:globalThis.renderRecipes}}');
     if (specifier === '@/services/households') return dataModule('export async function getCurrentHousehold(){return {ok:true,data:{}}}');
     if (specifier === '@/services/auth-browser') return dataModule('export async function signIn(){return {ok:false,error:{message:"Sign in unavailable"}}}');
     if (specifier === 'next/link') return next(pathToFileURL(require.resolve('next/link')).href, context);
+    if (specifier === 'next/image') return dataModule(`import {createElement} from "${pathToFileURL(require.resolve('react')).href}"; export default function Image(props){return createElement("img",props)}`);
     if (specifier.startsWith('@/')) {
       const base = new URL('../../../' + specifier.slice(2), import.meta.url);
       return next(base.href + (existsSync(fileURLToPath(base) + '.tsx') ? '.tsx' : '.ts'), context);
@@ -55,13 +57,17 @@ const { RecipeForm } = await import('./recipe-form.tsx');
 const { default: DetailPage } = await import('../../../app/recipes/[id]/page.tsx');
 const { default: LibraryPage } = await import('../../../app/recipes/page.tsx');
 const { default: SignInPage } = await import('../../../app/sign-in/page.tsx');
+const { AppHeader } = await import('../../layout/app-header.tsx');
 
 it('new form renders one required title, optional sections, and real add controls', () => {
   const html = renderToStaticMarkup(createElement(RecipeForm));
   assert.match(html, /Recipe title/);
   assert.match(html, /Add ingredient/);
   assert.match(html, /Add step/);
-  assert.match(html, /A title is enough to start/);
+  assert.match(html, /A name is enough\. Future-you can deal with the rest/);
+  assert.match(html, /Grimmy can cope/);
+  assert.match(html, /We’re cooking, not writing a thesis/);
+  assert.match(html, /Keep this recipe in favorites/);
   assert.equal((html.match(/required=""/g) ?? []).length, 1);
   assert.ok(!html.includes('canonical'));
 });
@@ -71,6 +77,8 @@ it('edit form renders one authored ingredient field and accessible row controls'
   assert.match(html, /Move ingredient 1 up/);
   assert.match(html, /Remove step 1/);
   assert.match(html, /Needs review/);
+  assert.match(html, /rows="1"/);
+  assert.match(html, /rows="2"/);
   assert.ok(!html.includes('Ingredient name'));
   assert.ok(!html.includes('Quantity'));
 });
@@ -81,15 +89,52 @@ it('recipe detail renders authored content, source, notes, and working action la
   assert.match(html, /  Stir gently.  /);
   assert.match(html, /  Add lemon.  /);
   assert.match(html, /href="https:\/\/example.com\/recipe"/);
-  assert.match(html, /Unfavorite/);
-  assert.match(html, /Delete/);
+  assert.match(html, /Keeper/);
+  assert.match(html, /How we make it/);
+  assert.match(html, /Remove from favorites/);
+  assert.match(html, /Delete recipe/);
+  assert.ok(!html.includes('lil-grimmy.png'));
+  assert.ok(!html.includes('A favorite'));
 });
 it('library shows metadata and links without full ingredient content', async () => {
   const html = renderToStaticMarkup(await LibraryPage());
   assert.match(html, /Garlic &amp; greens/);
   assert.match(html, /A weeknight keeper/);
+  assert.match(html, /View recipe/);
+  assert.match(html, /Keeper/);
+  assert.ok(!html.includes('Recipe file'));
+  assert.ok(!html.includes('Grimm Kreations'));
+  assert.ok(!html.includes('A Grimm Kreations project'));
+  assert.doesNotMatch(html, />\s*Favorite\s*</);
+  assert.match(html, /lil-grimmy\.png/);
+  assert.match(html, /Psst\. I checked—these look worth keeping/);
+  assert.match(html, /A note from Lil Grimmy/);
+  assert.match(html, /Lil Grimmy says/);
   assert.match(html, new RegExp('href="/recipes/' + id + '"'));
   assert.ok(!html.includes('2 cloves'));
+});
+it('empty library keeps the add action clear and gives the mascot contextual copy', async () => {
+  Object.assign(globalThis, { renderRecipes: [] });
+  try {
+    const html = renderToStaticMarkup(await LibraryPage());
+    assert.match(html, /The shelf is suspiciously tidy/);
+    assert.match(html, />Add your first recipe</);
+    assert.match(html, /lil-grimmy\.png/);
+    assert.match(html, /Not even a suspicious crumb\. Shall we make a little mess/);
+    assert.doesNotMatch(html, /Psst\. I checked/);
+  } finally {
+    Object.assign(globalThis, { renderRecipes: [recipe] });
+  }
+});
+it('mascot motion is CSS-only and honors reduced-motion preferences', () => {
+  assert.match(globalCss, /@keyframes grimmy-idle/);
+  assert.match(globalCss, /@keyframes grimmy-question/);
+  assert.match(globalCss, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(globalCss, /\.grimmy-image, \.grimmy-stage::before \{ animation: none; \}/);
+});
+it('app shell carries the understated Grimm Kreations maker signature', () => {
+  const html = renderToStaticMarkup(createElement(AppHeader));
+  assert.match(html, /Made by Grimm Kreations/);
 });
 it('sign-in renders labeled credentials with password autocomplete and no extra account flows', () => {
   const html = renderToStaticMarkup(createElement(SignInPage));

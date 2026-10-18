@@ -140,7 +140,7 @@ export async function approvePlanShoppingItems(
 }
 
 function unexpected<T>(message: string, error: { code?: string; message?: string }): ServiceResult<T> {
-  console.error('[plan-shopping] operation failed', { code: error.code, message: error.message });
+  console.error('[plan-shopping] operation failed', { code: /^(?:[0-9A-Z]{5}|PGRST[0-9]{3})$/.test(error.code ?? '') ? error.code : undefined });
   return err('unexpected_error', message);
 }
 

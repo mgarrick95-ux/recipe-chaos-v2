@@ -20,6 +20,7 @@ function mount(result: ServiceResult<null>, hydrated = true) {
   runInNewContext(outputText, {
     exports,
     console: { log() { assert.fail('No credential logging'); }, error() { assert.fail('No credential logging'); } },
+    window: { location: { replace(path: string) { assert.equal(path, '/recipes'); events.push('document-navigation'); } } },
     require(name: string) {
       if (name === 'react/jsx-runtime') return require(name);
       if (name === 'react') return {
@@ -29,10 +30,6 @@ function mount(result: ServiceResult<null>, hydrated = true) {
         useTransition: () => [false, (action: () => Promise<void>) => { transition = action(); }],
       };
       if (name === 'next/link') return { default: 'a' };
-      if (name === 'next/navigation') return { useRouter: () => ({
-        replace(path: string) { assert.equal(path, '/recipes'); events.push('redirect'); },
-        refresh() { events.push('refresh'); },
-      }) };
       if (name === '@/services/auth-browser') return { async signIn(email: string, password: string) {
         assert.deepEqual(events, ['preventDefault']);
         assert.equal(email, 'test@example.invalid');
@@ -53,12 +50,12 @@ function mount(result: ServiceResult<null>, hydrated = true) {
   };
 }
 
-it('sign-in prevents native submission before calling the service and redirects only on success', async () => {
+it('sign-in uses a full document navigation after success so anonymous router state cannot be replayed', async () => {
   const view = mount({ ok: true, data: null });
   assert.equal(view.form.props.method, 'post');
   assert.equal(view.form.props.action, '/sign-in');
   await view.submit();
-  assert.deepEqual(view.events, ['preventDefault', 'signIn', 'reset', 'redirect', 'refresh']);
+  assert.deepEqual(view.events, ['preventDefault', 'signIn', 'reset', 'document-navigation']);
 });
 
 it('failed authentication preserves the service message and does not navigate', async () => {

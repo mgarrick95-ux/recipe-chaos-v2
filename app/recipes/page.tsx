@@ -2,13 +2,26 @@ import Link from 'next/link';
 import { listRecipes } from '@/services/recipes';
 import { RecipeCard } from '@/components/domain/recipes/recipe-card';
 import { LoadError } from '@/components/domain/recipes/load-error';
+import { LilGrimm } from '@/components/brand/lil-grimm';
 
 export default async function RecipesPage() {
   const result = await listRecipes();
   if (!result.ok) return <LoadError error={result.error} />;
-  return <div className="space-y-10">
-    <div className="flex flex-wrap items-end justify-between gap-6"><div><p className="eyebrow mb-4">Good food. Less mental load.</p><h1 className="page-title">Your recipes<span className="text-teal-300">.</span></h1><p className="muted mt-4">The regulars, the experiments, the keepers.</p></div><Link href="/recipes/new" className="btn btn-primary">+ Add recipe</Link></div>
-    {result.data.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{result.data.map((recipe) => <RecipeCard key={recipe.id} recipe={recipe} />)}</div> :
-      <section className="panel flex min-h-80 flex-col items-center justify-center gap-5 text-center"><span aria-hidden="true" className="text-5xl text-purple-300">✳</span><h2 className="section-title">A little room for your favorites.</h2><p className="muted max-w-sm leading-7">No recipes yet. Add the ones you actually cook.</p><Link href="/recipes/new" className="text-link">Add your first recipe <span aria-hidden="true">→</span></Link></section>}
+  const hasRecipes = result.data.length > 0;
+  return <div className="space-y-8 sm:space-y-10">
+    <header className="recipe-hero">
+      <div className={`recipe-hero-layout ${hasRecipes ? '' : 'recipe-hero-layout-solo'}`.trim()}>
+        <div className="max-w-3xl">
+          <p className="eyebrow mb-4">Good food. Less mental load.</p><h1 className="page-title">Your recipes<span className="text-teal-300">.</span></h1><p className="muted mt-4 text-lg">The regulars, the experiments, the keepers.</p>
+          <Link href="/recipes/new" className="btn btn-primary maker-btn mt-7 w-full sm:w-auto">+ Add recipe</Link>
+        </div>
+        {hasRecipes && <LilGrimm scene="library" />}
+      </div>
+    </header>
+    {hasRecipes ? <section aria-label="Recipe collection"><div className="recipe-grid">{result.data.map((recipe) => <RecipeCard key={recipe.id} recipe={recipe} />)}</div></section> :
+      <section className="recipe-empty min-h-60 p-7 sm:min-h-64 sm:p-10">
+        <div className="relative z-10 flex flex-col items-start gap-4"><h2 className="section-title">The shelf is suspiciously tidy.</h2><p className="muted max-w-sm leading-7">No recipes yet. Add the first one before dinner gets ideas.</p><Link href="/recipes/new" className="btn btn-primary maker-btn mt-1">Add your first recipe</Link></div>
+        <LilGrimm scene="empty" />
+      </section>}
   </div>;
 }

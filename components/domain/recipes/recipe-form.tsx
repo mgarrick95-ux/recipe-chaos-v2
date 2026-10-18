@@ -35,34 +35,35 @@ export function RecipeForm({ recipe }: { recipe?: RecipeAggregate }) {
         router.push(`/recipes/${result.data.recipeId}`);
       } catch { setError({ code: 'unexpected_error', message: '' }); }
     });
-  }} className="space-y-6">
-    <fieldset disabled={pending} className="min-w-0 space-y-6">
-      <section className="panel space-y-6" aria-labelledby="basics-heading">
+  }} className="recipe-form space-y-1">
+    <fieldset disabled={pending} className="min-w-0 space-y-5">
+      <section className="recipe-form-section space-y-5" aria-labelledby="basics-heading">
         <h2 id="basics-heading" className="section-title">Start with a name</h2>
         <div><label className="field-label" htmlFor="title">Recipe title <span className="muted">(required)</span></label><input id="title" name="title" required value={fields.title} onChange={(e) => changeField('title', e.target.value)} placeholder="The pasta everyone asks for" /></div>
         <div><label className="field-label" htmlFor="description">A little about it <span className="muted">(optional)</span></label><textarea id="description" value={fields.description} onChange={(e) => changeField('description', e.target.value)} rows={2} placeholder="A weeknight regular, a family favorite…" /></div>
-        <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={fields.isFavorite} onChange={(e) => setFields({ ...fields, isFavorite: e.target.checked })} />Keep this one in favorites</label>
+        <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" checked={fields.isFavorite} onChange={(e) => setFields({ ...fields, isFavorite: e.target.checked })} />Keep this recipe in favorites</label>
       </section>
-      <section className="panel space-y-4" aria-labelledby="ingredients-heading">
-        <div><h2 id="ingredients-heading" className="section-title">Ingredients</h2><p className="muted mt-2 text-sm">One line per ingredient, just as you’d write it.</p></div>
+      <section className="recipe-form-section space-y-3" aria-labelledby="ingredients-heading">
+        <div><h2 id="ingredients-heading" className="section-title">Ingredients</h2><p className="muted mt-1.5 text-sm leading-6">Write it how you’d actually say it. Grimmy can cope.</p></div>
         {ingredients.map((row, index) => <RowEditor key={row.key} inputId={`ingredient-${row.key}`} kind="ingredient" index={index} count={ingredients.length} value={row.originalText}
           needsReview={recipe?.ingredients.some((saved) => saved.id === row.id && saved.verificationState === 'needs_review')}
           onChange={(originalText) => setIngredients((rows) => rows.map((item) => item.key === row.key ? { ...item, originalText } : item))}
           onRemove={() => setIngredients((rows) => rows.filter((item) => item.key !== row.key))}
           onMove={(direction) => setIngredients((rows) => moveRow(rows, index, direction))} />)}
-        <button type="button" className="btn" onClick={() => { const key = `new-${nextKey.current++}`; setIngredients((rows) => [...rows, { key, originalText: '' }]); }}>+ Add ingredient</button>
+        <button type="button" className="btn maker-btn mt-1" onClick={() => { const key = `new-${nextKey.current++}`; setIngredients((rows) => [...rows, { key, originalText: '' }]); }}>+ Add ingredient</button>
       </section>
-      <section className="panel space-y-4" aria-labelledby="steps-heading">
-        <div><h2 id="steps-heading" className="section-title">Method</h2><p className="muted mt-2 text-sm">Add the steps you need. You can come back to this later.</p></div>
+      <section className="recipe-form-section space-y-3" aria-labelledby="steps-heading">
+        <div><h2 id="steps-heading" className="section-title">How we make it</h2><p className="muted mt-1.5 text-sm leading-6">One step at a time. We’re cooking, not writing a thesis.</p></div>
         {steps.map((row, index) => <RowEditor key={row.key} inputId={`step-${row.key}`} kind="step" index={index} count={steps.length} value={row.instruction}
           onChange={(instruction) => setSteps((rows) => rows.map((item) => item.key === row.key ? { ...item, instruction } : item))}
           onRemove={() => setSteps((rows) => rows.filter((item) => item.key !== row.key))}
           onMove={(direction) => setSteps((rows) => moveRow(rows, index, direction))} />)}
-        <button type="button" className="btn" onClick={() => { const key = `new-${nextKey.current++}`; setSteps((rows) => [...rows, { key, instruction: '' }]); }}>+ Add step</button>
+        <button type="button" className="btn maker-btn mt-1" onClick={() => { const key = `new-${nextKey.current++}`; setSteps((rows) => [...rows, { key, instruction: '' }]); }}>+ Add step</button>
       </section>
-      <details className="panel" open={recipe && Boolean(recipe.sourceUrl || recipe.servings || recipe.yieldText || recipe.notes) ? true : undefined}>
+      <details className="recipe-form-section" open={recipe && Boolean(recipe.sourceUrl || recipe.servings || recipe.yieldText || recipe.notes) ? true : undefined}>
         <summary className="section-title">A few extra details <span className="muted text-sm font-normal">· optional</span></summary>
-        <div className="mt-6 space-y-5">
+        <p className="muted mt-2 text-sm">Useful little facts, if you’ve got them.</p>
+        <div className="mt-5 space-y-5">
           <div className="grid gap-5 sm:grid-cols-2">
             <div><label htmlFor="servings" className="field-label">Servings</label><input id="servings" type="number" min="0.01" step="any" value={fields.servings} onChange={(e) => changeField('servings', e.target.value)} placeholder="4" /></div>
             <div><label htmlFor="yieldText" className="field-label">Yield</label><input id="yieldText" value={fields.yieldText} onChange={(e) => changeField('yieldText', e.target.value)} placeholder="One loaf, about 12 cookies…" /></div>
@@ -76,10 +77,10 @@ export function RecipeForm({ recipe }: { recipe?: RecipeAggregate }) {
       {error.code === 'conflict' && <button type="button" className="btn mt-3" onClick={() => { if (window.confirm('Reload this recipe? Unsaved changes in this form will be lost.')) window.location.reload(); }}>Reload recipe</button>}
       {error.code === 'unauthorized' && <a href="/sign-in" target="_blank" rel="noopener noreferrer" className="text-link mt-2 inline-block">Sign in in a new tab</a>}
     </div>}
-    <div className="flex flex-wrap items-center gap-4 border-t border-white/10 pt-6">
-      <button disabled={pending} className="btn btn-primary" type="submit">{pending ? 'Saving…' : recipe ? 'Save changes' : 'Save recipe'}</button>
+    <div className="flex flex-col items-stretch gap-3 border-t border-white/10 pt-5 sm:flex-row sm:items-center">
+      <button disabled={pending} className="btn btn-primary maker-btn" type="submit">{pending ? 'Saving…' : recipe ? 'Save changes' : 'Save recipe'}</button>
       <Link href={cancelHref} className="text-link text-sm">Cancel</Link>
-      <span role="status" className="muted text-sm sm:ml-auto">{pending ? 'Keeping your recipe safe…' : 'A title is enough to start.'}</span>
+      <span role="status" className="muted text-sm sm:ml-auto sm:text-right">{pending ? 'Keeping your recipe safe…' : 'A name is enough. Future-you can deal with the rest.'}</span>
     </div>
   </form>;
 }

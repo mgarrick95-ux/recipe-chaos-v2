@@ -92,5 +92,5 @@ function unexpected<T>(operation: string, error: DatabaseError, report: (operati
   return err("unexpected_error", "Recipe data could not be updated. Please try again.");
 }
 function defaultReport(operation: string, error: DatabaseError): void {
-  console.error(`[recipes] ${operation} failed`, { code: error.code, message: error.message, details: error.details, hint: error.hint });
+  console.error(`[recipes] ${operation} failed`, { code: /^(?:[0-9A-Z]{5}|PGRST[0-9]{3})$/.test(error.code ?? '') ? error.code : undefined });
 }

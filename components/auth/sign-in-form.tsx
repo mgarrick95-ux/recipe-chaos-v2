@@ -2,13 +2,11 @@
 
 import Link from 'next/link';
 import { useRef, useState, useSyncExternalStore, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { signIn } from '@/services/auth-browser';
 
 const subscribe = () => () => {};
 
 export function SignInForm() {
-  const router = useRouter();
   const hydrated = useSyncExternalStore(subscribe, () => true, () => false);
   const emailInput = useRef<HTMLInputElement>(null);
   const passwordInput = useRef<HTMLInputElement>(null);
@@ -25,8 +23,7 @@ export function SignInForm() {
       const result = await signIn(email, password);
       if (!result.ok) { setMessage(result.error.message); return; }
       form.reset();
-      router.replace('/recipes');
-      router.refresh();
+      window.location.replace('/recipes');
     });
   }}>
     {/* No names: native form serialization must never include credentials. */}
