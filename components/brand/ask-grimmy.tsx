@@ -96,7 +96,7 @@ export function AskGrimmy() {
         </Link>)}
       </nav>
       <p className="grimmy-helper-disclaimer">
-        I have useful shortcuts, not unlimited AI chat (yet). I'll always ask before saving a recipe or meal.
+        I have useful shortcuts, not unlimited AI chat (yet). I&apos;ll always ask before saving a recipe or meal.
       </p>
     </section>}
     <button type="button" className="grimmy-helper-trigger" aria-expanded={open}

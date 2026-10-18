@@ -5,13 +5,21 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FoundRecipe } from '@/domain/recipes/discovery';
 import { RecipeForm } from './recipe-form';
 
+async function fetchRecipes(term: string, random = false): Promise<FoundRecipe[]> {
+  const queryString = random ? 'random=1' : 'q=' + encodeURIComponent(term.trim());
+  const response = await fetch('/api/recipes/discover?' + queryString, { cache: 'no-store' });
+  const data = await response.json() as { found?: FoundRecipe[]; error?: string };
+  if (!response.ok) throw new Error(data.error || 'Grimmy could not look up those recipes.');
+  return data.found ?? [];
+}
+
 export function RecipeFinder({ initialQuery = '' }: { initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<FoundRecipe[]>([]);
   const [selected, setSelected] = useState<FoundRecipe | null>(null);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(() => initialQuery.trim().length >= 2);
 
   const search = useCallback(async (term: string, random = false) => {
     setError('');
@@ -19,25 +27,33 @@ export function RecipeFinder({ initialQuery = '' }: { initialQuery?: string }) {
     setSelected(null);
     setBusy(true);
     try {
-      const queryString = random ? 'random=1' : 'q=' + encodeURIComponent(term.trim());
-      const response = await fetch('/api/recipes/discover?' + queryString, { cache: 'no-store' });
-      const data = await response.json() as { found?: FoundRecipe[]; error?: string };
-      if (!response.ok) {
-        setError(data.error || 'Grimmy could not look up those recipes.');
-        setResults([]);
-        return;
-      }
-      setResults(data.found ?? []);
+      setResults(await fetchRecipes(term, random));
       setSearched(true);
-    } catch {
+    } catch (error) {
       setResults([]);
-      setError('That recipe catalogue is not reachable right now. Try searching the wider web.');
+      setError(error instanceof Error ? error.message
+        : 'That recipe catalogue is not reachable right now. Try searching the wider web.');
     } finally { setBusy(false); }
   }, []);
 
   useEffect(() => {
-    if (initialQuery.trim().length >= 2) void search(initialQuery);
-  }, [initialQuery, search]);
+    if (initialQuery.trim().length < 2) return;
+    let active = true;
+    // Search begins asynchronously; effect setup never sets state synchronously.
+    void fetchRecipes(initialQuery).then(found => {
+      if (!active) return;
+      setResults(found);
+      setSearched(true);
+    }).catch(error => {
+      if (!active) return;
+      setResults([]);
+      setError(error instanceof Error ? error.message
+        : 'That recipe catalogue is not reachable right now. Try searching the wider web.');
+    }).finally(() => {
+      if (active) setBusy(false);
+    });
+    return () => { active = false; };
+  }, [initialQuery]);
 
   const widerQuery = query.trim() || 'easy dinner recipes';
   const widerWeb = 'https://www.google.com/search?q=' + encodeURIComponent(widerQuery + ' recipe');

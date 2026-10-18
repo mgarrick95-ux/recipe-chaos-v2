@@ -47,7 +47,7 @@ export function MealBrain({ plan, context, disabled = false }: {
     });
   }
 
-  function useIdea(slotId: string, recipe: BrainSuggestion, position: number) {
+  function chooseIdea(slotId: string, recipe: BrainSuggestion, position: number) {
     setError('');
     setNotice('');
     startTransition(async () => {
@@ -126,7 +126,7 @@ export function MealBrain({ plan, context, disabled = false }: {
               <div className="flex flex-wrap gap-2">
                 <button type="button" className="btn btn-primary" disabled={pending || disabled}
                   aria-label={'Choose ' + idea.title + ' for Meal ' + slot.position}
-                  onClick={() => useIdea(slot.id, idea, slot.position)}>Use this meal</button>
+                  onClick={() => chooseIdea(slot.id, idea, slot.position)}>Use this meal</button>
                 <button type="button" className="btn" disabled={pending || disabled}
                   aria-label={'Try another idea for Meal ' + slot.position}
                   onClick={() => anotherIdea(slot.id, idea.recipeId)}>Another idea</button>

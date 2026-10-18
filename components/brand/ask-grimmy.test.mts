@@ -28,7 +28,7 @@ it('recipe entry points expose both online importing and Grimmy discovery', () =
     assert.ok(add.includes(path));
   }
   assert.match(importer, /<RecipeImport\s*\/>/);
-  assert.match(finder, /<RecipeFinder initialQuery=\{query\}\s*\/>/);
+  assert.match(finder, /<RecipeFinder key=\{query\} initialQuery=\{query\}\s*\/>/);
 });
 
 it('import and discovery flows require review before saving with existing recipe actions', () => {

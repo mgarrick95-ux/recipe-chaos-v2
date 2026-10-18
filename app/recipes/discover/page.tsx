@@ -16,6 +16,6 @@ export default async function DiscoverRecipesPage({
         Preview and edit anything you like before bringing it into your recipe box.
       </p>
     </header>
-    <RecipeFinder initialQuery={query} />
+    <RecipeFinder key={query} initialQuery={query} />
   </div>;
 }
