@@ -151,7 +151,7 @@ it('rejects unavailable DNS instead of attempting an unverified connection', asy
   await assert.rejects(() => loadPublicRecipePage(start, testTransport({
     resolveHost: async () => { throw Error('DNS failed'); },
     requestPage: async () => { connections++; throw Error('Unexpected request'); },
-  })), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'unreachable');
+  })), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'dns');
   assert.equal(connections, 0);
 });
 
@@ -162,5 +162,41 @@ it('uses explicit verified IPv4 socket lookup for the real transport', async () 
   assert.match(source, /lookup:\s*\(_hostname,\s*_options,\s*callback\)/u);
   assert.match(source, /callback\(null,\s*verifiedIPv4,\s*4\)/u);
   assert.match(source, /servername:\s*url\.hostname/u);
-  assert.match(source, /resolve4\(hostname\)/u);
+  assert.match(source, /lookup\(hostname, \{ family: 4, all: true \}\)/u);
+});
+
+
+it('distinguishes website refusal, throttling, missing pages and other HTTP errors', async () => {
+  for (const [status, kind] of [
+    [401, 'denied'],
+    [403, 'denied'],
+    [429, 'rate_limited'],
+    [404, 'not_found'],
+    [500, 'http_error'],
+  ] as const) {
+    await assert.rejects(
+      () => loadPublicRecipePage(start, testTransport({
+        requestPage: async () => ({ status, contentType: 'text/html', location: null, html: '' }),
+      })),
+      (error: unknown) => error instanceof RecipeWebsiteError && error.kind === kind,
+    );
+  }
+});
+
+it('distinguishes a connection failure from a DNS resolution failure', async () => {
+  await assert.rejects(() => loadPublicRecipePage(start, testTransport({
+    requestPage: async () => { throw new Error('TLS connection failed'); },
+  })), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'connection');
+  await assert.rejects(() => loadPublicRecipePage(start, testTransport({
+    resolveHost: async () => { throw new Error('DNS failed'); },
+  })), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'dns');
+});
+
+it('does not send another request when private IP addresses appear in DNS', async () => {
+  let attempted = false;
+  await assert.rejects(() => loadPublicRecipePage(start, testTransport({
+    resolveHost: async () => ['104.21.2.2', '127.0.0.1'],
+    requestPage: async () => { attempted = true; throw Error('Unexpected request'); },
+  })), (error: unknown) => error instanceof RecipeWebsiteError && error.kind === 'blocked');
+  assert.equal(attempted, false);
 });

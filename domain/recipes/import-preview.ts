@@ -100,6 +100,62 @@ export function previewFromRecipeObject(object: RecordValue, sourceUrl: string):
   };
 }
 
+
+/**
+ * Some recipe blogs expose WP Recipe Maker cards in their print views but
+ * do not include Recipe JSON-LD there. Only accept recognized WPRM fields:
+ * never mine arbitrary article paragraphs as recipe directions.
+ */
+function wprmClassContents(html: string, tag: string, className: string, max = 80): string[] {
+  const expression = new RegExp('<' + tag + '\\b([^>]*)>([\\s\\S]*?)<\\/' + tag + '\\s*>', 'giu');
+  const result: string[] = [];
+  let found: RegExpExecArray | null;
+  while (result.length < max && (found = expression.exec(html)) !== null) {
+    const classAttribute = found[1].match(/\bclass\s*=\s*["']([^"']+)["']/iu)?.[1] ?? '';
+    if (classAttribute.split(/\s+/u).includes(className)) result.push(found[2]);
+  }
+  return result;
+}
+
+function wprmPreview(html: string, sourceUrl: string): RecipeImportPreview | null {
+  if (!html.includes('wprm-recipe-ingredient') || !html.includes('wprm-recipe-instruction')) return null;
+  const names = ['h1', 'h2', 'h3', 'h4', 'div', 'span']
+    .flatMap(tag => wprmClassContents(html, tag, 'wprm-recipe-name', 3));
+  const title = names.map(name => readable(name, 180).replace(/\s+/gu, ' ').trim()).find(Boolean);
+  if (!title) return null;
+
+  const ingredientList = wprmClassContents(html, 'li', 'wprm-recipe-ingredient', 70)
+    .map(inner => {
+      const component = (kind: string) => {
+        const value = wprmClassContents(inner, 'span', 'wprm-recipe-ingredient-' + kind, 1)[0];
+        return value === undefined ? '' : readable(value, 350).replace(/\s+/gu, ' ').trim();
+      };
+      const parts = ['amount', 'unit', 'name', 'notes'].map(component).filter(Boolean);
+      return parts.length ? parts.join(' ').trim() : readable(inner, 1800).replace(/\s+/gu, ' ').trim();
+    }).filter(Boolean);
+  const instructionList = wprmClassContents(html, 'li', 'wprm-recipe-instruction', 70)
+    .map(inner => {
+      const content = wprmClassContents(inner, 'div', 'wprm-recipe-instruction-text', 1)[0] ?? inner;
+      return readable(content, 4000).trim();
+    }).filter(Boolean);
+
+  if (!ingredientList.length || !instructionList.length) return null;
+  const summary = wprmClassContents(html, 'div', 'wprm-recipe-summary', 1)[0];
+  const rawServings = wprmClassContents(html, 'span', 'wprm-recipe-servings', 1)[0];
+  const servings = rawServings ? readable(rawServings, 30).match(/^\d+(?:\.\d+)?/u)?.[0] ?? '' : '';
+  return {
+    title,
+    description: summary ? readable(summary, 1200) : '',
+    sourceUrl,
+    servings,
+    yieldText: '',
+    notes: '',
+    isFavorite: false,
+    ingredients: ingredientList.map(originalText => ({ originalText })),
+    steps: instructionList.map(instruction => ({ instruction })),
+  };
+}
+
 /**
  * The host is validated by the fetch boundary. This function only inspects
  * embedded Schema.org Recipe data in a bounded HTML document, without scripts.
@@ -120,5 +176,5 @@ export function parseRecipePage(html: string, sourceUrl: string): RecipeImportPr
       if (draft) return draft;
     } catch { /* Keep looking; never infer fields from unrelated page content. */ }
   }
-  return null;
+  return wprmPreview(html, sourceUrl);
 }

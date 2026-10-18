@@ -119,3 +119,52 @@ it('rejects invalid catalogue results and unsafe source URLs', () => {
   assert.ok(found);
   assert.equal(found.draft.sourceUrl, 'https://www.themealdb.com/');
 });
+
+
+it('extracts a WP Recipe Maker printable card when JSON-LD is unavailable', () => {
+  const printUrl = 'https://www.halfbakedharvest.com/wprm_print/parmesan-garlic-butter-crusted-halibut';
+  const html = [
+    '<div class="wprm-recipe-container">',
+    '<h2 class="wprm-recipe-name">Parmesan &amp; Garlic Halibut</h2>',
+    '<div class="wprm-recipe-summary">A quick baked fish.</div>',
+    '<span class="wprm-recipe-servings">4</span>',
+    '<ul class="wprm-recipe-ingredients">',
+    '<li class="wprm-recipe-ingredient">',
+    '<span class="wprm-recipe-ingredient-amount">1/2</span>',
+    '<span class="wprm-recipe-ingredient-unit">cup</span>',
+    '<span class="wprm-recipe-ingredient-name"><a href="/breadcrumbs">Panko breadcrumbs</a></span>',
+    '</li>',
+    '<li class="wprm-recipe-ingredient">',
+    '<span class="wprm-recipe-ingredient-amount">2</span>',
+    '<span class="wprm-recipe-ingredient-unit">cloves</span>',
+    '<span class="wprm-recipe-ingredient-name">garlic, grated</span>',
+    '</li></ul>',
+    '<ul class="wprm-recipe-instructions">',
+    '<li class="wprm-recipe-instruction"><div class="wprm-recipe-instruction-text"><p>Heat the oven.</p></div></li>',
+    '<li class="wprm-recipe-instruction"><div class="wprm-recipe-instruction-text">Bake until golden.</div></li>',
+    '</ul></div>',
+  ].join('');
+  const draft = parseRecipePage(html, printUrl);
+  assert.ok(draft);
+  assert.equal(draft.title, 'Parmesan & Garlic Halibut');
+  assert.equal(draft.sourceUrl, printUrl);
+  assert.equal(draft.description, 'A quick baked fish.');
+  assert.equal(draft.servings, '4');
+  assert.deepEqual(draft.ingredients, [
+    { originalText: '1/2 cup Panko breadcrumbs' },
+    { originalText: '2 cloves garlic, grated' },
+  ]);
+  assert.deepEqual(draft.steps, [
+    { instruction: 'Heat the oven.' },
+    { instruction: 'Bake until golden.' },
+  ]);
+});
+
+it('does not invent a recipe from incomplete WP Recipe Maker page furniture', () => {
+  const html = [
+    '<h2 class="wprm-recipe-name">Some recipe</h2>',
+    '<li class="wprm-recipe-ingredient"><span class="wprm-recipe-ingredient-name">onion</span></li>',
+    '<p class="wprm-recipe-instructions-header">There are no directions here.</p>',
+  ].join('');
+  assert.equal(parseRecipePage(html, url), null);
+});

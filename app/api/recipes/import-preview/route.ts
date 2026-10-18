@@ -34,9 +34,12 @@ export async function POST(request: Request) {
     }, { status: 422 });
     return NextResponse.json({ draft }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
+    const reason = error instanceof RecipeWebsiteError ? error.kind : 'unexpected';
+    // Log a short diagnostic category, never recipe page content or URL parameters.
+    console.warn('[recipe-import] preview failed', { reason });
     const message = error instanceof RecipeWebsiteError
       ? error.message
       : 'Grimmy could not preview this recipe. Try pasting the recipe text below.';
-    return NextResponse.json({ error: message }, { status: 422 });
+    return NextResponse.json({ error: message, reason }, { status: 422 });
   }
 }

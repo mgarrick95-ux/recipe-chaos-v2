@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { resolve4 } from 'node:dns/promises';
+import { lookup } from 'node:dns/promises';
 import { request as httpsRequest } from 'node:https';
 import { isPublicRecipeIPv4, validateRecipeImportUrl } from '@/domain/recipes/import-urls';
 
@@ -20,14 +20,22 @@ export type RecipeWebsiteTransport = {
 export type LoadedRecipePage = { html: string; finalUrl: string };
 
 export class RecipeWebsiteError extends Error {
-  constructor(readonly kind: 'address' | 'blocked' | 'redirect' | 'too_large' | 'content' | 'unreachable') {
+  constructor(readonly kind:
+    'address' | 'blocked' | 'redirect' | 'too_large' | 'content' |
+    'dns' | 'connection' | 'denied' | 'rate_limited' | 'not_found' | 'http_error' | 'unreachable') {
     const messages = {
       address: 'That link is not a valid public HTTPS recipe webpage.',
       blocked: 'That link leads to a private or unsafe network address. Try a public recipe link.',
       redirect: 'That recipe page redirects somewhere unsafe or too many times. Try its final public recipe link.',
       too_large: 'That webpage is too large for a safe recipe preview.',
       content: 'That link did not return a readable recipe webpage.',
-      unreachable: 'Grimmy could not read that website. Some sites block imports; you can paste the recipe text instead.',
+      dns: 'Grimmy could not resolve that website’s address. Check the link or your internet connection, then try again.',
+      connection: 'Grimmy could not make a secure connection to that website. If it opens in your browser, try its Print Recipe link or paste the recipe text.',
+      denied: 'That website refused the automatic request (HTTP 401/403). It may block recipe importers. Try the printable recipe page or paste its recipe text.',
+      rate_limited: 'That website is temporarily limiting automated requests (HTTP 429). Try later or paste the recipe text.',
+      not_found: 'That recipe link returned Not Found (HTTP 404). Open the page in your browser and check its address.',
+      http_error: 'That website could not provide the recipe right now. Try later or paste its recipe text.',
+      unreachable: 'Grimmy could not read that website. Try its printable recipe link or paste the recipe text instead.',
     };
     super(messages[kind]);
   }
@@ -54,7 +62,7 @@ export async function loadPublicRecipePage(
     try {
       ips = await transport.resolveHost(pageUrl.hostname);
     } catch {
-      throw new RecipeWebsiteError('unreachable');
+      throw new RecipeWebsiteError('dns');
     }
     // Do not connect if *any* answer is private, malformed, or reserved.
     if (!ips.length || ips.length > 30 || ips.some(ip => !isPublicRecipeIPv4(ip))) {
@@ -65,7 +73,7 @@ export async function loadPublicRecipePage(
       response = await transport.requestPage(pageUrl, ips[0]);
     } catch (error) {
       if (error instanceof RecipeWebsiteError) throw error;
-      throw new RecipeWebsiteError('unreachable');
+      throw new RecipeWebsiteError('connection');
     }
 
     if (response.status >= 300 && response.status < 400) {
@@ -77,7 +85,10 @@ export async function loadPublicRecipePage(
       }
       continue; // Every redirect is checked and DNS-pinned from scratch.
     }
-    if (response.status !== 200) throw new RecipeWebsiteError('unreachable');
+    if (response.status === 401 || response.status === 403) throw new RecipeWebsiteError('denied');
+    if (response.status === 429) throw new RecipeWebsiteError('rate_limited');
+    if (response.status === 404) throw new RecipeWebsiteError('not_found');
+    if (response.status !== 200) throw new RecipeWebsiteError('http_error');
     if (!/^(text\/html|application\/xhtml\+xml)(?:\s*;|$)/iu.test(response.contentType)) {
       throw new RecipeWebsiteError('content');
     }
@@ -90,7 +101,11 @@ export async function loadPublicRecipePage(
 }
 
 const productionTransport: RecipeWebsiteTransport = {
-  resolveHost: hostname => resolve4(hostname),
+  // Use the OS resolver (including the user's configured Windows DNS) rather
+  // than an independent DNS query. Every answer is still checked and the
+  // HTTPS socket is pinned to a verified public IPv4 address.
+  resolveHost: async hostname => (await lookup(hostname, { family: 4, all: true }))
+    .map(record => record.address),
   requestPage: (url, verifiedIPv4) => new Promise((resolve, reject) => {
     const request = httpsRequest(url, {
       method: 'GET',
