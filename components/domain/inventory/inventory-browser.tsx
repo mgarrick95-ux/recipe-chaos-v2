@@ -49,7 +49,7 @@ export function InventoryBrowser({ items }: { items: InventoryItem[] }) {
   );
 
   return <div className="space-y-8">
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="enchanted-filter-bar flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div className="flex flex-wrap gap-2" aria-label="Filter FrostPantry">
         {filterOptions.map((option) => {
           const active = filter === option.value;
@@ -57,9 +57,7 @@ export function InventoryBrowser({ items }: { items: InventoryItem[] }) {
             key={option.value}
             type="button"
             aria-pressed={active}
-            className={active
-              ? "rounded-full border border-teal-300/50 bg-teal-300/15 px-4 py-2 text-sm font-medium text-teal-100"
-              : "rounded-full border border-white/10 bg-white/[.03] px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-white/20 hover:text-white"}
+            className="enchanted-filter"
             onClick={() => setFilter(option.value)}
           >
             {option.label}
@@ -67,7 +65,7 @@ export function InventoryBrowser({ items }: { items: InventoryItem[] }) {
         })}
       </div>
 
-      <label className="flex items-center gap-3 text-sm text-zinc-300">
+      <label className="flex items-center gap-3 text-sm">
         <span className="whitespace-nowrap">Sort</span>
         <select
           aria-label="Sort FrostPantry"
@@ -111,7 +109,7 @@ function InventorySections({ items, filter, todayIso }: { items: InventoryItem[]
 }
 
 function SectionHeading({ label, count }: { label: string; count: number }) {
-  return <div className="flex items-center justify-between gap-4">
+  return <div className="enchanted-section-heading flex items-center justify-between gap-4">
     <h2 className="section-title">{label}</h2>
     <span className="muted text-sm">{count} {count === 1 ? "item" : "items"}</span>
   </div>;
@@ -121,18 +119,18 @@ function InventoryGrid({ items, todayIso }: { items: InventoryItem[]; todayIso: 
   return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
     {items.map((item) => <article
       key={item.id}
-      className="panel group flex min-h-44 flex-col gap-3 transition-colors hover:border-teal-400/60"
+      className="panel inventory-card group flex min-h-44 flex-col gap-3 transition-colors hover:border-teal-400/60"
     >
       <div className="flex items-start justify-between gap-3">
         <Link href={`/pantry/${item.id}/edit`} className="min-w-0 flex-1">
           <h3 className="section-title group-hover:text-teal-200">{item.displayName}</h3>
         </Link>
-        {item.useSoonStatus === "use_soon" && <span className="rounded-full bg-purple-300/10 px-2 py-1 text-xs text-purple-200">Use soon</span>}
+        {item.useSoonStatus === "use_soon" && <span className="inventory-tag">Use soon</span>}
       </div>
       <p className="muted text-sm">{item.quantity !== null ? `${item.quantity}${item.unit ? ` ${item.unit}` : ""}` : "Quantity not tracked"}</p>
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        {item.isStaple && <span className="rounded-full bg-teal-300/10 px-2 py-1 text-teal-200">Staple</span>}
-        {item.isOutOfStock && <span className="rounded-full bg-rose-300/10 px-2 py-1 text-rose-200">Out of stock</span>}
+        {item.isStaple && <span className="inventory-tag inventory-tag--teal">Staple</span>}
+        {item.isOutOfStock && <span className="inventory-tag inventory-tag--danger">Out of stock</span>}
         <ExpiryLabel item={item} todayIso={todayIso} />
       </div>
       <div className="mt-auto flex items-center justify-between gap-3 border-t border-white/10 pt-3">
@@ -180,7 +178,7 @@ function ExpiryLabel({ item, todayIso }: { item: InventoryItem; todayIso: string
   const date = formatDate(item.expiryDate);
 
   if (isExpired(item, todayIso)) {
-    return <span className="rounded-full bg-rose-300/10 px-2 py-1 text-rose-200">Expired {date}</span>;
+    return <span className="inventory-tag inventory-tag--danger">Expired {date}</span>;
   }
   if (isSoonish(item, todayIso)) {
     return <span className="rounded-full bg-purple-300/10 px-2 py-1 text-purple-200">Use by {date}</span>;

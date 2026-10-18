@@ -11,12 +11,12 @@ export default async function ShoppingPage() {
       : <a className="text-link" href="/shopping">Try again →</a>}
   </div>;
 
-  return <div className="space-y-9">
-    <div>
+  return <div className="enchanted-page enchanted-shopping space-y-8 sm:space-y-9">
+    <header className="enchanted-hero"><div className="enchanted-hero-copy">
       <p className="eyebrow mb-4">For the next shop</p>
-      <h1 className="page-title">Shopping<span className="text-teal-300">.</span></h1>
+      <h1 className="page-title">Shopping<span aria-hidden="true" className="enchanted-title-mark">✦</span></h1>
       <p className="muted mt-4 max-w-xl">One list for what you need. Add something whenever it comes to mind; checking it off is enough.</p>
-    </div>
+    </div></header>
     <ShoppingList initialItems={result.data} />
   </div>;
 }

@@ -18,15 +18,15 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
     d.setUTCDate(d.getUTCDate() + days);
     return d.toISOString().slice(0, 10);
   };
-  return <div className="space-y-9">
-    <div>
+  return <div className="enchanted-page enchanted-plan space-y-8 sm:space-y-9">
+    <header className="enchanted-hero"><div className="enchanted-hero-copy">
       <p className="eyebrow mb-4">Meals, your way</p>
-      <h1 className="page-title">Weekly plan<span className="text-teal-300">.</span></h1>
+      <h1 className="page-title">Weekly plan<span aria-hidden="true" className="enchanted-title-mark">✦</span></h1>
       <p className="muted mt-4 max-w-xl">Pick how many meals you want, then choose recipes. No assigned weekdays.</p>
-    </div>
-    <div className="flex flex-wrap items-center gap-4">
+    </div></header>
+    <div className="enchanted-week-strip">
       <Link className="btn" href={`/plan?week=${adjacent(-7)}`}>← Previous week</Link>
-      <span className="font-medium">Week of {date.toLocaleDateString('en-CA', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' })}</span>
+      <span className="enchanted-week-label">Week of {date.toLocaleDateString('en-CA', { timeZone: 'UTC', month: 'long', day: 'numeric', year: 'numeric' })}</span>
       <Link className="btn" href={`/plan?week=${adjacent(7)}`}>Next week →</Link>
     </div>
     <PlanningEditor key={week} view={result.data} />

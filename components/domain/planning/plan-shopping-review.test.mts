@@ -108,3 +108,13 @@ it('toggles Add to Shopping selection without mutating the current selection', (
   assert.equal(deselected.has(rows[0].originKey), false);
   assert.equal((render(deselected).match(/checked=""/g) ?? []).length, 1);
 });
+
+it('presents the three review sections in the enchanted folios without making covered items selectable', () => {
+  const html = render();
+  assert.match(html, /enchanted-review/);
+  assert.match(html, /enchanted-review-section/);
+  assert.match(html, /enchanted-review-row/);
+  assert.equal((html.match(/type="checkbox"/g) ?? []).length, 3);
+  assert.match(html, /Already on Shopping/);
+  assert.match(html, /Already in FrostPantry/);
+});

@@ -72,7 +72,7 @@ export function PlanShoppingReview({ planId }: { planId: string }) {
   }
 
   if (rows === null) {
-    return <section className="panel space-y-4" aria-labelledby="plan-shopping-title">
+    return <section className="panel enchanted-review space-y-4" aria-labelledby="plan-shopping-title">
       <div>
         <h2 id="plan-shopping-title" className="section-title">Ready to check ingredients?</h2>
         <p className="muted mt-2 max-w-2xl text-sm leading-6">Review what your planned recipes call for against FrostPantry and Shopping. Nothing is added until you approve it.</p>
@@ -108,7 +108,7 @@ export function PlanShoppingReviewContent({ rows, selected, pending, error, noti
 }) {
   const grouped = groupPlanShoppingReview(rows);
 
-  return <section className="panel space-y-7" aria-labelledby="plan-shopping-title">
+  return <section className="panel enchanted-review space-y-7" aria-labelledby="plan-shopping-title">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
         <h2 id="plan-shopping-title" className="section-title">Review ingredients</h2>
@@ -167,7 +167,7 @@ function ReviewSection({ title, count, helper, children }: {
   helper: string;
   children: React.ReactNode;
 }) {
-  return <section className="space-y-4 rounded-2xl border border-white/10 bg-black/10 p-4 sm:p-5">
+  return <section className="enchanted-review-section space-y-4">
     <div>
       <h3 className="text-base font-semibold uppercase tracking-[0.08em]">{title} <span className="muted font-normal">({count})</span></h3>
       <p className="muted mt-1 text-sm leading-6">{helper}</p>
@@ -182,7 +182,7 @@ function SelectableReviewRow({ row, checked, pending, onToggle }: {
   pending: boolean;
   onToggle: () => void;
 }) {
-  return <label className="block cursor-pointer rounded-xl border border-teal-300/20 bg-teal-300/5 p-4 transition-colors hover:bg-teal-300/10">
+  return <label className="enchanted-review-row block cursor-pointer transition-colors">
     <div className="flex items-start gap-4">
       <input className="mt-1 min-h-5 min-w-5 shrink-0" type="checkbox" checked={checked} disabled={pending} onChange={onToggle} aria-label={`Add ${row.originalText} from ${row.recipeTitle} to Shopping`} />
       <div className="min-w-0 flex-1">
@@ -195,7 +195,7 @@ function SelectableReviewRow({ row, checked, pending, onToggle }: {
 }
 
 function ReadOnlyReviewRow({ row }: { row: PlanShoppingReviewRow }) {
-  return <article className="rounded-xl border border-white/10 bg-black/10 p-4">
+  return <article className="enchanted-review-row">
     <div className="flex items-start gap-3">
       <span className="mt-0.5 shrink-0 text-base font-semibold text-teal-200" aria-hidden="true">✓</span>
       <div className="min-w-0 flex-1">

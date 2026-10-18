@@ -134,7 +134,7 @@ export function InventoryForm({ item }: { item?: InventoryItem }) {
       </section>
     </fieldset>
 
-    {duplicate && !item && <section className="rounded-[1rem] border border-purple-300/30 bg-purple-300/[.07] p-5" role="status">
+    {duplicate && !item && <section className="panel inventory-duplicate p-5" role="status">
       <p className="font-medium text-purple-100">Looks like this may already be in FrostPantry.</p>
       <p className="muted mt-2 text-sm">
         {duplicate.displayName} is already in {locationLabels[duplicate.location]}

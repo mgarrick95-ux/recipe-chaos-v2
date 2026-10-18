@@ -116,7 +116,7 @@ export function ShoppingList({ initialItems }: { initialItems: ShoppingItem[] })
   const checked = items.filter(item => item.isChecked);
 
   return <div className="space-y-7">
-    <section className="panel space-y-5" aria-labelledby="add-shopping-title">
+    <section className="panel enchanted-ledger space-y-5" aria-labelledby="add-shopping-title">
       <div>
         <h2 id="add-shopping-title" className="section-title">Add to the list</h2>
         <p className="muted mt-1 text-sm">Just the name is fine. Add an amount if it helps.</p>
@@ -173,7 +173,7 @@ type RowProps = {
 };
 
 function ShoppingRow({ item, isEditing, editFields, setEditFields, onEdit, onCancel, onSave, onToggle, onRemove, pending }: RowProps) {
-  return <article className="panel flex flex-wrap items-start gap-4 !p-4">
+  return <article className={`panel enchanted-list-row flex flex-wrap items-start gap-4 !p-4 ${item.isChecked ? "enchanted-list-row--checked" : ""}`}>
     <label className="flex shrink-0 items-center gap-2 pt-1 text-sm">
       <input type="checkbox" checked={item.isChecked} disabled={pending} onChange={onToggle} aria-label={`Mark ${item.displayName} ${item.isChecked ? 'not bought' : 'bought'}`} />
     </label>

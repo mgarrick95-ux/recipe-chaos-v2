@@ -48,7 +48,7 @@ export function PlanningEditor({ view }: { view: PlanningView }) {
       <section className="space-y-4" aria-labelledby="plan-meals">
         <h2 id="plan-meals" className="section-title">Your meals</h2>
         {view.recipes.length === 0 && <div className="panel muted">Add a recipe first, then choose it here. <Link className="text-link" href="/recipes/new">Add a recipe →</Link></div>}
-        <div className="grid gap-4">{plan.slots.map(slot => <article key={slot.id} className="panel space-y-4">
+        <div className="grid gap-4">{plan.slots.map(slot => <article key={slot.id} className="panel enchanted-meal-slot space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-lg font-semibold">Meal {slot.position}</h3>
             <button type="button" className="btn" disabled={pending} onClick={() =>
@@ -69,7 +69,7 @@ export function PlanningEditor({ view }: { view: PlanningView }) {
         </article>)}</div>
       </section>
       {plan.slots.some((slot) => slot.recipeId) && <PlanShoppingReview planId={plan.id} />}
-      <section className="panel space-y-4" aria-labelledby="planning-context">
+      <section className="panel enchanted-plan-context space-y-4" aria-labelledby="planning-context">
         <div><h2 id="planning-context" className="section-title">What does this week feel like?</h2>
           <p className="muted mt-1 text-sm">Optional notes for planning. You can change these anytime.</p></div>
         <form className="space-y-4" onSubmit={event => { event.preventDefault(); run(() => saveContextAction(plan.id, context), 'Planning notes saved.'); }}>
