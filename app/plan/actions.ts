@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { suggestMealIdeas } from '@/services/meal-brain';
 import { saveManualPlan, savePlanningContext, selectManualRecipe, setManualSlotLock, type PlanContextInput } from '@/services/planning';
 import { approvePlanShoppingItems, getPlanShoppingReview, type PlanShoppingApprovalOrigin } from '@/services/plan-shopping';
 
@@ -36,4 +37,9 @@ export async function approvePlanShoppingAction(planId: string, origins: PlanSho
     revalidatePath('/shopping');
   }
   return result;
+}
+
+/** Advisory only. This action performs no writes or revalidation. */
+export async function suggestMealIdeasAction(week: string, context: PlanContextInput) {
+  return suggestMealIdeas(week, context);
 }

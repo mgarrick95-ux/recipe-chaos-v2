@@ -210,7 +210,7 @@ function isAvailableInventory(item: ReviewInventoryItem): boolean {
   return !item.isOutOfStock && item.quantity !== 0;
 }
 
-function sameIngredient(
+export function sameIngredient(
   recipeCanonicalId: string | null,
   normalizedRecipeText: string,
   candidateCanonicalId: string | null,

@@ -649,3 +649,82 @@
 @media (max-width: 420px) {
   .recipe-filter-actions .btn { flex: 1 1 auto; }
 }
+
+
+/* Meal Brain v1: suggestions are separate folios, never saved meals. */
+.enchanted-plan .meal-brain-panel {
+  border-left-color: #ac85bb;
+  background:
+    radial-gradient(circle at 98% 0%, rgba(132, 79, 137, .32), transparent 21rem),
+    linear-gradient(150deg, #292d2a, #282330 85%);
+}
+.meal-brain-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(219, 195, 155, .26);
+  padding-bottom: 1rem;
+}
+.meal-brain-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 1rem;
+}
+.meal-brain-card {
+  min-width: 0;
+  border: 1px solid #bfa27b;
+  border-left: 4px solid #947096;
+  border-radius: .7rem .3rem .8rem .4rem;
+  padding: clamp(1rem, 2vw, 1.35rem);
+  color: #312923;
+  background:
+    radial-gradient(circle at 100% 0, rgba(122, 78, 126, .12), transparent 12rem),
+    linear-gradient(140deg, #f6e7cb, #e9d2af);
+  box-shadow: 3px 5px 0 rgba(9, 14, 11, .16);
+}
+.meal-brain-slot {
+  color: #6b4268;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  font-size: .68rem;
+  font-weight: 750;
+}
+.meal-brain-recipe-title {
+  color: #332821;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  font-size: clamp(1.25rem, 1.9vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.meal-brain-badges { display: flex; flex-wrap: wrap; gap: .38rem; }
+.meal-brain-badges span {
+  border: 1px solid rgba(96, 84, 59, .55);
+  border-radius: .55rem .25rem .6rem .3rem;
+  background: rgba(255, 248, 230, .75);
+  padding: .3rem .5rem;
+  color: #453a31;
+  font-size: .7rem;
+  font-weight: 650;
+}
+.meal-brain-reasons {
+  padding-left: 1.05rem;
+  list-style: disc;
+  color: #453a30;
+  font-size: .85rem;
+  line-height: 1.65;
+}
+.enchanted-plan .meal-brain-card .muted { color: #625647; }
+.enchanted-plan .meal-brain-card .text-link { color: #205447; }
+.enchanted-plan .meal-brain-card .text-link:hover { color: #153c32; }
+.enchanted-plan .meal-brain-card .btn {
+  background: #fff4de;
+  color: #332b22;
+  border-color: #9f835c;
+}
+.enchanted-plan .meal-brain-card .btn:hover:not(:disabled) { background: #fffaf0; }
+.enchanted-plan .meal-brain-card .btn-primary {
+  background: #72d9bf;
+  color: #15342c;
+  border-color: #3b977d;
+}
+.enchanted-plan .meal-brain-card .btn-primary:hover:not(:disabled) { background: #98e7d1; }

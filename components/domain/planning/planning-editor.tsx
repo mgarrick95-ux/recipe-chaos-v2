@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import { lockMealAction, saveContextAction, savePlanAction, selectMealAction } from '@/app/plan/actions';
 import type { PlanContextInput, PlanningView } from '@/services/planning';
 import { PlanShoppingReview } from './plan-shopping-review';
+import { MealBrain } from './meal-brain';
 
 export function PlanningEditor({ view }: { view: PlanningView }) {
   const router = useRouter();
@@ -68,7 +69,6 @@ export function PlanningEditor({ view }: { view: PlanningView }) {
           {slot.locked && <p className="muted text-sm">Unlock this meal to swap or remove its recipe.</p>}
         </article>)}</div>
       </section>
-      {plan.slots.some((slot) => slot.recipeId) && <PlanShoppingReview planId={plan.id} />}
       <section className="panel enchanted-plan-context space-y-4" aria-labelledby="planning-context">
         <div><h2 id="planning-context" className="section-title">What does this week feel like?</h2>
           <p className="muted mt-1 text-sm">Optional notes for planning. You can change these anytime.</p></div>
@@ -88,6 +88,8 @@ export function PlanningEditor({ view }: { view: PlanningView }) {
           <button className="btn btn-primary" type="submit" disabled={pending}>Save notes</button>
         </form>
       </section>
+      <MealBrain plan={plan} context={context} disabled={pending} />
+      {plan.slots.some((slot) => slot.recipeId) && <PlanShoppingReview planId={plan.id} />}
     </>}
   </div>;
 }
