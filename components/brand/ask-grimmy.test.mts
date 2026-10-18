@@ -50,11 +50,25 @@ it('both preview APIs enforce authentication and avoid arbitrary network fetches
   assert.match(importRoute, /getCurrentHousehold\(\)/);
   assert.match(importRoute, /redirect: 'manual'/);
   assert.match(importRoute, /validateRecipeImportUrl/);
-  assert.match(importRoute, /MAX_HTML_BYTES/);
+  assert.match(importRoute, /loadPublicRecipePage/);
   assert.match(discoverRoute, /getCurrentHousehold\(\)/);
   assert.match(discoverRoute, /https:\/\/www\.themealdb\.com\/api\/json\/v1\//);
   assert.match(discoverRoute, /NODE_ENV === 'development'/);
-  assert.match(urls, /supportedPublishers/);
+  assert.match(urls, /validateRecipeImportUrl/);
+  assert.match(urls, /isPublicRecipeIPv4/);
+  const transport = at('services/recipe-web-fetch.ts');
+  assert.match(transport, /MAX_RECIPE_HTML_BYTES/);
+  assert.match(transport, /lookup:/);
+});
+
+it('the importer offers an editable pasted-text fallback for blocked websites', () => {
+  const importer = at('components/domain/recipes/recipe-import.tsx');
+  const parser = at('domain/recipes/pasted-import.ts');
+  assert.match(importer, /parsePastedRecipe/);
+  assert.match(importer, /Make editable draft/);
+  assert.match(importer, /RecipeForm key=\{preview\.version\} initialDraft=\{preview\.draft\}/);
+  assert.match(parser, /foundIngredients/);
+  assert.match(parser, /foundSteps/);
 });
 
 it('the helper and importer use a readable enchanted style with mobile support', () => {

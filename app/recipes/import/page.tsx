@@ -8,8 +8,8 @@ export default function ImportRecipePage() {
       <p className="eyebrow mb-3">From the wider world</p>
       <h1 className="page-title">Bring a recipe home ✦</h1>
       <p className="muted mt-3 max-w-2xl leading-7">
-        Paste a link from a supported recipe website. Grimmy will try to gather the ingredients
-        and directions into an editable draft for your recipe box.
+        Paste a link from almost any public recipe website, or copy the ingredients and directions
+        straight into Grimmy&apos;s basket. Everything becomes an editable draft before you save.
       </p>
     </header>
     <RecipeImport />

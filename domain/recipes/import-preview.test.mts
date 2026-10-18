@@ -69,7 +69,7 @@ it('handles HowTo instructions, numeric entities and multiline markup', () => {
   assert.equal(draft.title, '🍲 Soup');
   assert.equal(draft.steps[0].instruction, 'Boil.\nServe & enjoy.');
 });
-it('does not accept unsupported, non-HTTPS or internal URLs', () => {
+it('rejects private, credentialed, non-HTTPS and unsafe addresses', () => {
   for (const value of [
     'http://www.allrecipes.com/recipe/123',
     'https://allrecipes.com.evil.test/',
@@ -79,11 +79,12 @@ it('does not accept unsupported, non-HTTPS or internal URLs', () => {
     'https://allrecipes.com:8443/recipe/123',
     'https://someone:password@allrecipes.com/recipe/123',
     'file:///etc/passwd',
-    'https://example.com/recipe',
+    'https://localhost.local/recipe',
     'not a URL',
   ]) {
     assert.equal(validateRecipeImportUrl(value).ok, false, value);
   }
+  assert.equal(validateRecipeImportUrl('https://some-new-food-blog.com/soup').ok, true);
   const verified = validateRecipeImportUrl('https://www.budgetbytes.com/soup/#method');
   assert.equal(verified.ok, true);
   if (verified.ok) assert.equal(verified.url, 'https://www.budgetbytes.com/soup/');
